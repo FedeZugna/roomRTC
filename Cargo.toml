@@ -1,0 +1,36 @@
+[package]
+name = "room_rtc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rand = "0.9.2"
+gstreamer = "0.21.3"
+gstreamer-video = "0.21.2"
+gstreamer-app = "0.21.2"
+gstreamer-audio = "0.21.2"
+glib = "0.18.5"
+gtk = "0.18"
+ctrlc = "3.4.1"
+iced = { version = "0.13.1", features = ["advanced", "image"] }
+iced_fonts = { version = "0.1.1", features = ["bootstrap"] }
+image = "0.25"
+rustls = "0.23.35"
+serde_json = "1.0.145"
+rustls-pemfile = "2.2.0"
+serde = { version = "1.0.228", features = ["derive"] }
+log = { path = "src/log" }
+udp-dtls = "0.1"
+openssl = "0.10"
+rfd = "0.17.2"
+sctp-proto = "0.7.0"
+bytes = "1.10.1"
+
+
+[[bin]]
+name = "cliente"
+path = "src/bin/cliente.rs"
+
+[[bin]]
+name = "server"
+path = "src/bin/server.rs"

@@ -126,6 +126,13 @@ Si el transporte no puede escribir un mensaje propio, el sistema SHALL marcar co
 - **THEN** se emite un error de envío asociado al id 1
 - **AND** el mensaje no se pierde en silencio
 
+#### Scenario: chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado
+- **GIVEN** la pantalla de videollamada y un canal de comandos hacia el transporte que ya no acepta mensajes
+- **WHEN** el usuario envía `Hola`
+- **THEN** el historial tiene la entrada propia `Hola` marcada "no enviado"
+- **AND** la vista lo muestra como "no enviado"
+- **AND** la app no falla
+
 #### Scenario: chat_3_6_muestra_no_enviado
 - **GIVEN** dos mensajes propios en el historial, con ids 1 y 2
 - **WHEN** la app recibe el error de envío del id 2

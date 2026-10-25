@@ -105,9 +105,26 @@ Para testear el Hito 2 sin el binario, `sctp_chat.rs` reúne funciones puras. Lo
 
 ### D6. Integración en la UI
 
-Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón y `on_submit` del `text_input`), `ChatReceived { generation, text }` y `ChatSendFailed { id, generation }`. El Hito 2 ya agregó al `match` de `FrameUpdate` (`unified_app.rs:455`) las ramas de `ChatReceived` y `ChatSendFailed`, que por ahora no hacen nada. El Hito 3 las completa, y se sigue procesando una notificación por tick (3.5).
+Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón y `on_submit` del `text_input`), `ChatReceived { generation, text }` y `ChatSendFailed { id, generation }`. Las líneas citadas en D6 corresponden al código al cierre del Hito 3.
 
-El panel de chat se muestra junto al video con widgets `text`, que muestran texto literal sin interpretar marcado. Los mensajes propios no enviados llevan la etiqueta "no enviado".
+**Procesamiento en el mismo tick.**
+- **Hecho.** `FrameUpdate` toma una sola notificación por tick, como antes. Primero la saca del receptor y suelta el lock (`self.sctp_notif_rx.try_lock().ok().and_then(|guard| guard.try_recv().ok())`, `unified_app.rs:466-472`), y recién después la procesa (`:473`).
+- **Por qué se suelta el lock antes.** Para procesar el chat, `FrameUpdate` llama a `self.update(...)`, que necesita `&mut self`. Si el guard del receptor siguiera vivo, `self` quedaría prestado y el código no compilaría (E0502).
+- **Hecho.** Las notificaciones de archivos siguen como antes: `Task::done(AppMessage::IncomingFileOffer { .. })` y las demás (`:476`).
+- **Hecho.** Las de chat se procesan en el mismo tick con `return self.update(AppMessage::ChatReceived { .. })` y `return self.update(AppMessage::ChatSendFailed { .. })` (`:486`, `:489`). Así hay un solo camino por mensaje: los handlers de `AppMessage::ChatReceived` y `ChatSendFailed`, que descartan lo que no es de la llamada actual (`is_current_call`, D2).
+- *Descartada:* `Task::done(AppMessage::ChatReceived { .. })`, como las notificaciones de archivos. **Motivo:** los tests llaman a `update` y no ejecutan el `Task` que devuelve, así que 3.5 ("una notificación por tick") no se podría observar después de cada tick.
+
+**Panel de chat.**
+- **Hecho.** `view_chat` (`unified_app.rs:1217`) se ubica en la misma fila que los dos videos. El modal de oferta de archivos sigue superpuesto sobre todo el contenido, como antes.
+- **Hecho.** Cada línea es un widget `text`, que muestra el texto literal sin interpretar marcado. La arma `chat_line` (`:1291-1297`), con estas etiquetas:
+  - Mensaje propio: `Yo: <texto>`.
+  - Mensaje propio no enviado: `Yo: <texto> (no enviado)`, en rojo (`:1225`).
+  - Mensaje del participante: `Participante: <texto>`. La app no conoce el nombre del otro usuario durante la llamada.
+- **Hecho.** El `text_input` muestra el borrador, lo actualiza con `ChatDraftChanged` y envía con Enter mediante `on_submit(AppMessage::ChatSend)` (`:1232-1234`). Al lado hay un botón "Enviar".
+- **Supuesto.** Las etiquetas y la ubicación del panel se confirman en la prueba manual del Hito 4 (ver Open Questions).
+
+**Fallo al entregar el comando al transporte (3.11).**
+- **Hecho.** Si `sctp_tx.send(SendChat { .. })` falla porque el hilo SCTP TX ya no recibe comandos, `ChatSend` marca el mensaje como "no enviado" con `mark_failed(id)` (`unified_app.rs:575-578`). El mensaje ya se agregó al historial, así que no se pierde en silencio. Es el mismo requisito de reporte de fallo de envío de la spec, con su propio escenario (`chat_3_11`).
 
 **De dónde salen las condiciones de `prepare_send` (D4).** Cuando llega `ChatSend`, la app las calcula así:
 - **Llamada activa:** la pantalla actual es `AppScreen::VideoCall`. No se usa `running_call`.

@@ -79,6 +79,7 @@ notificaciones_pendientes: uno, dos, tres (de bob)
 | 3.8 | Dadas 2 notificaciones de chat del par que llegan con la app ya en el lobby (el par mandó un mensaje justo antes de cortar), cuando empieza una llamada nueva y se procesan 2 ticks, entonces no hay panic y ninguna aparece en el historial |
 | 3.9 | Regresión: los tests existentes de `unified_app` (`send_file_sends_sctp_command_with_current_path`, los de `EndCall` y `RemoteCallEnded`, `view_and_subscription_smoke_for_each_screen`) siguen pasando sin cambiar su semántica |
 | 3.10 | Dado `running_call` en falso en la pantalla de videollamada y el borrador `Hola`, cuando el usuario pulsa Enviar, entonces no sale ningún comando y el historial no cambia |
+| 3.11 | Dado que el canal de comandos hacia el transporte ya no acepta mensajes (el hilo SCTP terminó), cuando el usuario envía `Hola`, entonces el historial tiene la entrada propia `Hola` marcada "no enviado", la vista lo muestra y la app no falla |
 
 ### Hito 4 — Integración y prueba manual 
 

@@ -2,7 +2,7 @@
 
 Cada hito tiene un **Background** y criterios Given/When/Then. Cada criterio `N.M` tiene un test en Rust nombrado `chat_<N>_<M>_<descripcion>` (por ejemplo `chat_1_3_rechaza_mensaje_sobre_el_limite`). 
 
-**Para avanzar de hito:** (a) todos los tests del hito existen, se vio que fallaban antes de implementar y ahora pasan, (b) `cargo test` en verde sin regresiones respecto de la línea base, (c) `cargo fmt --all -- --check` y `cargo clippy --all-targets` sin advertencias nuevas, (d) `/opsx:verify` sin CRITICAL. 
+**Para avanzar de hito:** (a) todos los tests del hito existen, se vio que fallaban antes de implementar y ahora pasan, (b) `cargo test` en verde sin regresiones respecto de la línea base, (c) `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings` sin advertencias nuevas, (d) `/opsx:verify` sin CRITICAL. 
 
 
 ### Hito 1 — Modelo y reglas del mensaje (sin red ni UI)
@@ -82,7 +82,7 @@ notificaciones_pendientes: uno, dos, tres (de bob)
 
 - Dos `UnifiedApp` intercambian mensajes en ambos sentidos, orden por emisor, archivo de 64 KiB más 20 mensajes cruzados con el archivo idéntico, y limpieza al cortar.
 - Chat con una oferta de archivo pendiente (modal visible): el chat funciona y la oferta no cambia.
-- Prueba manual con dos procesos reales (servidor de señalización local, dos `cliente`, audio y video activos): saludo en ambos sentidos, chat durante una transferencia de archivo sin interrupción observable de medios (consignando las limitaciones de la medición), desconexión controlada del par, y llamada nueva sin mensajes viejos.
+- Prueba manual con dos procesos reales (servidor de señalización local, dos `cliente`, audio y video activos): saludo en ambos sentidos, chat durante una transferencia de archivo sin interrupción observable de medios (consignando las limitaciones de la medición), desconexión controlada del par, el chat funciona en la primera llamada tras reiniciar.
 
 
 ### Criterios globales (Definition of Done de la feature)

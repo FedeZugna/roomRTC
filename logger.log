@@ -1,0 +1,125 @@
+[SERVER] - [INFO] - 2026-10-19 17:44:45 - ServerState: Inicializando servidor
+[SERVER] - [INFO] - 2026-10-19 17:44:45 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-19 17:44:45 - run: Servidor escuchando en 127.0.0.1:8443
+[SERVER] - [INFO] - 2026-10-19 17:45:08 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:50259
+[SERVER] - [WARNING] - 2026-10-19 17:45:13 - login: Intento de login con usuario no existente: fede
+[SERVER] - [INFO] - 2026-10-19 17:45:18 - register_user: Usuario registrado: fede
+[SERVER] - [INFO] - 2026-10-19 17:45:36 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:50261
+[SERVER] - [INFO] - 2026-10-19 17:45:43 - register_user: Usuario registrado: prueba
+[SERVER] - [INFO] - 2026-10-19 17:45:45 - handle_client_tls: Conexión desde 127.0.0.1:50261 cerrada sin login
+[SERVER] - [INFO] - 2026-10-19 17:45:58 - handle_client_tls: Conexión desde 127.0.0.1:50259 cerrada sin login
+[SERVER] - [INFO] - 2026-10-19 17:46:01 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:50263
+[SERVER] - [INFO] - 2026-10-19 17:46:04 - login: Usuario fede inició sesión desde 127.0.0.1:50263
+[SERVER] - [INFO] - 2026-10-19 17:46:09 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:50264
+[SERVER] - [INFO] - 2026-10-19 17:46:13 - login: Usuario prueba inició sesión desde 127.0.0.1:50264
+[SERVER] - [INFO] - 2026-10-19 17:46:15 - start_call: Iniciada llamada: prueba -> fede
+[SERVER] - [INFO] - 2026-10-19 17:46:36 - end_call: Finalizada llamada: prueba <-> fede
+[SERVER] - [INFO] - 2026-10-19 17:46:54 - logout: Usuario prueba cerró sesión
+[SERVER] - [INFO] - 2026-10-19 17:46:56 - logout: Usuario fede cerró sesión
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Inicializando servidor
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-23 16:45:46 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - register_user: Usuario registrado: alice[SERVER] - [INFO] - 2026-10-23 16:45:46 - register_user: Usuario registrado: user1
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - register_user: Usuario registrado: test_user
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - register_user: Usuario registrado: bob[SERVER] - [INFO] - 2026-10-23 16:45:46 - login: Usuario user1 inició sesión desde 127.0.0.1
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - login: Usuario alice inició sesión desde 127.0.0.1[SERVER] - [WARNING] - 2026-10-23 16:45:46 - login: Usuario user1 ya está conectado
+
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-23 16:45:46 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Inicializando servidor
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Inicializando servidor
+
+
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-23 16:51:25 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - register_user: Usuario registrado: user1
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - register_user: Usuario registrado: alice[SERVER] - [INFO] - 2026-10-23 16:51:25 - register_user: Usuario registrado: test_user
+
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - login: Usuario user1 inició sesión desde 127.0.0.1[SERVER] - [INFO] - 2026-10-23 16:51:25 - register_user: Usuario registrado: bob
+
+[SERVER] - [WARNING] - 2026-10-23 16:51:25 - login: Usuario user1 ya está conectado[SERVER] - [INFO] - 2026-10-23 16:51:25 - login: Usuario alice inició sesión desde 127.0.0.1
+
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-23 16:51:25 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Inicializando servidor
+
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Inicializando servidor
+
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - register_user: Usuario registrado: test_user
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - register_user: Usuario registrado: user1
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - register_user: Usuario registrado: alice[SERVER] - [INFO] - 2026-10-23 16:52:58 - login: Usuario user1 inició sesión desde 127.0.0.1
+
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - register_user: Usuario registrado: bob[SERVER] - [WARNING] - 2026-10-23 16:52:58 - login: Usuario user1 ya está conectado
+
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - login: Usuario alice inició sesión desde 127.0.0.1
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-23 16:52:58 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Inicializando servidor
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Inicializando servidor
+
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-25 11:42:06 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - register_user: Usuario registrado: user1
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - login: Usuario user1 inició sesión desde 127.0.0.1[SERVER] - [INFO] - 2026-10-25 11:42:06 - register_user: Usuario registrado: test_user
+
+[SERVER] - [WARNING] - 2026-10-25 11:42:06 - login: Usuario user1 ya está conectado[SERVER] - [INFO] - 2026-10-25 11:42:06 - register_user: Usuario registrado: alice
+
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - register_user: Usuario registrado: bob
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - login: Usuario alice inició sesión desde 127.0.0.1
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-25 11:42:06 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Inicializando servidor
+
+
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - register_user: Usuario registrado: user1[SERVER] - [INFO] - 2026-10-25 12:00:46 - register_user: Usuario registrado: alice
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - register_user: Usuario registrado: test_user[SERVER] - [INFO] - 2026-10-25 12:00:46 - login: Usuario user1 inició sesión desde 127.0.0.1
+
+
+[SERVER] - [WARNING] - 2026-10-25 12:00:46 - login: Usuario user1 ya está conectado
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - register_user: Usuario registrado: bob
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - login: Usuario alice inició sesión desde 127.0.0.1
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-25 12:00:46 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Inicializando servidor[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Inicializando servidor
+
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Inicializando servidor
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Cargados 0 usuarios desde archivo[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Cargados 0 usuarios desde archivo
+
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - ServerState: Cargados 0 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - register_user: Usuario registrado: user1
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - register_user: Usuario registrado: test_user[SERVER] - [INFO] - 2026-10-25 12:02:45 - login: Usuario user1 inició sesión desde 127.0.0.1[SERVER] - [INFO] - 2026-10-25 12:02:45 - register_user: Usuario registrado: alice
+
+[SERVER] - [WARNING] - 2026-10-25 12:02:45 - login: Usuario user1 ya está conectado
+
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - register_user: Usuario registrado: bob
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - login: Usuario alice inició sesión desde 127.0.0.1
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - login: Usuario bob inició sesión desde 127.0.0.2
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - start_call: Iniciada llamada: alice -> bob
+[SERVER] - [INFO] - 2026-10-25 12:02:45 - end_call: Finalizada llamada: alice <-> bob
+[SERVER] - [INFO] - 2026-10-25 12:43:52 - ServerState: Inicializando servidor
+[SERVER] - [INFO] - 2026-10-25 12:43:52 - ServerState: Cargados 2 usuarios desde archivo
+[SERVER] - [INFO] - 2026-10-25 12:43:52 - run: Servidor escuchando en 127.0.0.1:8443
+[SERVER] - [INFO] - 2026-10-25 12:44:14 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:52299
+[SERVER] - [INFO] - 2026-10-25 12:44:19 - login: Usuario fede inició sesión desde 127.0.0.1:52299
+[SERVER] - [INFO] - 2026-10-25 12:45:05 - handle_client_tls: Nueva conexión TLS desde: 127.0.0.1:52310
+[SERVER] - [INFO] - 2026-10-25 12:45:09 - login: Usuario prueba inició sesión desde 127.0.0.1:52310
+[SERVER] - [INFO] - 2026-10-25 12:45:11 - start_call: Iniciada llamada: prueba -> fede
+[SERVER] - [INFO] - 2026-10-25 12:45:20 - end_call: Finalizada llamada: prueba <-> fede
+[SERVER] - [INFO] - 2026-10-25 12:45:28 - logout: Usuario prueba cerró sesión
+[SERVER] - [INFO] - 2026-10-25 12:45:35 - logout: Usuario fede cerró sesión

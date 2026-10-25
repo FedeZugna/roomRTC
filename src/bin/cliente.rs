@@ -859,7 +859,7 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
     // ================================================================
     //                              AUDIO
     // ================================================================
-    // Audio usa UDP en puertos +2 
+    // Audio usa UDP en puertos +2
     // Local audio bind:  local_video_port + 2
     // Remote audio dst : remote_video_port + 2
     let audio_port_offset: u16 = 2;
@@ -879,7 +879,7 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
             .saturating_add(audio_port_offset),
     );
 
-    // Mute/unmute 
+    // Mute/unmute
     let audio_muted = Arc::new(AtomicBool::new(false));
 
     {
@@ -1053,7 +1053,7 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
     });
 
     // ================================================================
-    //               CONSUMIDOR JITTER 
+    //               CONSUMIDOR JITTER
     // ================================================================
     let jitter_shut = Arc::clone(&shutdown);
     let jitter_thread = thread::spawn(move || {
@@ -1571,7 +1571,9 @@ mod tests {
         }
     }
 
-    fn extract_video_settings_from_media(media: &room_rtc::sdp::MediaDescription) -> (Option<String>, u32, bool, u64, u16) {
+    fn extract_video_settings_from_media(
+        media: &room_rtc::sdp::MediaDescription,
+    ) -> (Option<String>, u32, bool, u64, u16) {
         let mut source_attr: Option<String> = None;
         let mut fps: u32 = 30;
 
@@ -1604,7 +1606,13 @@ mod tests {
             }
         }
 
-        (source_attr, fps, rtcp_enabled, rtcp_interval_ms, rtcp_port_offset)
+        (
+            source_attr,
+            fps,
+            rtcp_enabled,
+            rtcp_interval_ms,
+            rtcp_port_offset,
+        )
     }
 
     fn compute_remote_port(session_id: u64, local_port: u16) -> u16 {
@@ -1614,7 +1622,6 @@ mod tests {
             local_port - 1
         }
     }
-
 
     #[test]
     fn generate_local_identity_fingerprint_is_upper_hex_64() {
@@ -1633,12 +1640,20 @@ mod tests {
 
         #[allow(deprecated)]
         {
-            let digest = identity.0.cert
+            let digest = identity
+                .0
+                .cert
                 .digest(MessageDigest::sha256())
                 .expect("cert.digest sha256 failed");
 
-            let computed = digest.iter().map(|b| format!("{:02X}", b)).collect::<String>();
-            assert_eq!(computed, fp, "Fingerprint devuelto debe coincidir con el cert");
+            let computed = digest
+                .iter()
+                .map(|b| format!("{:02X}", b))
+                .collect::<String>();
+            assert_eq!(
+                computed, fp,
+                "Fingerprint devuelto debe coincidir con el cert"
+            );
         }
     }
 
@@ -1657,7 +1672,9 @@ mod tests {
         a=rtcp_port_offset:3
         "#;
 
-        let sdp = SessionDescription::new().parse(sdp_text).expect("SDP parse failed");
+        let sdp = SessionDescription::new()
+            .parse(sdp_text)
+            .expect("SDP parse failed");
         assert_eq!(sdp.media.len(), 1);
         let media = &sdp.media[0];
 
@@ -1691,7 +1708,9 @@ mod tests {
             a=framerate:30
             "#;
 
-        let sdp = SessionDescription::new().parse(sdp_text).expect("SDP parse failed");
+        let sdp = SessionDescription::new()
+            .parse(sdp_text)
+            .expect("SDP parse failed");
         let media = &sdp.media[0];
 
         let (source_attr, fps, rtcp_enabled, rtcp_interval_ms, rtcp_port_offset) =
@@ -1725,7 +1744,9 @@ mod tests {
         a=rtcp_port_offset:0
         "#;
 
-        let sdp = SessionDescription::new().parse(sdp_text).expect("SDP parse failed");
+        let sdp = SessionDescription::new()
+            .parse(sdp_text)
+            .expect("SDP parse failed");
         let media = &sdp.media[0];
 
         let (source_attr, fps, rtcp_enabled, rtcp_interval_ms, rtcp_port_offset) =
@@ -1742,7 +1763,6 @@ mod tests {
         let remote_port = compute_remote_port(sdp.origin.session_id, media.port);
         assert_eq!(remote_port, 7001);
     }
-
 
     #[test]
     fn audio_ports_are_video_port_plus_two_saturating() {

@@ -1172,11 +1172,14 @@ pub fn run_unified_app(config: UnifiedAppConfig) -> iced::Result {
 mod tests {
     use super::*;
     use std::sync::atomic::Ordering;
-    use std::sync::{mpsc, Arc, Mutex};
+    use std::sync::{Arc, Mutex, mpsc};
     use std::time::{Duration, Instant};
 
-    fn make_app_with_channels(
-    ) -> (UnifiedApp, mpsc::Receiver<SignalingCommand>, mpsc::Receiver<SctpCommand>) {
+    fn make_app_with_channels() -> (
+        UnifiedApp,
+        mpsc::Receiver<SignalingCommand>,
+        mpsc::Receiver<SctpCommand>,
+    ) {
         let pending_auth = Arc::new(Mutex::new(None));
         let auth_result = Arc::new(Mutex::new(None));
 
@@ -1273,7 +1276,7 @@ mod tests {
         app.current_username = Some("me".to_string());
 
         let users = vec![
-            ("me ".to_string(), UserStatus::Available), 
+            ("me ".to_string(), UserStatus::Available),
             ("alice".to_string(), UserStatus::Available),
             ("bob".to_string(), UserStatus::Busy),
         ];
@@ -1329,7 +1332,10 @@ mod tests {
 
         // verifica transición a video y flag
         assert!(app.running_call.load(Ordering::SeqCst));
-        assert!(matches!(app.screen, AppScreen::VideoCall { joined: true, .. }));
+        assert!(matches!(
+            app.screen,
+            AppScreen::VideoCall { joined: true, .. }
+        ));
     }
 
     #[test]

@@ -70,7 +70,6 @@ pub fn run_lobby(join_flag: Arc<AtomicBool>) -> iced::Result {
         .run_with(move || (Lobby::new(flag_for_lobby), Task::none()))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,5 +132,4 @@ mod tests {
         // Solo debería cambiar con update(Join)
         assert!(!join_flag.load(Ordering::SeqCst));
     }
-
 }

@@ -1,0 +1,190 @@
+    Checking room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+warning: this function has too many arguments (10/7)
+  --> src/client/transport/dtls_manager.rs:42:1
+   |
+42 | / pub fn spawn_dtls_handshake_thread(
+43 | |     dtls_stream: SharedDtlsStream,
+44 | |     running_call: Arc<AtomicBool>,
+45 | |     socket_dtls: UdpSocket,
+...  |
+52 | |     sctp_max_file_size: u32,
+53 | | ) -> JoinHandle<()> {
+   | |___________________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#too_many_arguments
+   = note: `#[warn(clippy::too_many_arguments)]` on by default
+
+warning: you seem to want to iterate on a map's values
+   --> src/rtp/mod.rs:137:33
+    |
+137 |             for (_seq, part) in self.frags.iter() {
+    |                                 ^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#for_kv_map
+    = note: `#[warn(clippy::for_kv_map)]` on by default
+help: use the corresponding method
+    |
+137 -             for (_seq, part) in self.frags.iter() {
+137 +             for part in self.frags.values() {
+    |
+
+warning: `room_rtc` (lib) generated 2 warnings (run `cargo clippy --fix --lib -p room_rtc -- ` to apply 1 suggestion)
+warning: called `unwrap` on `first_packet` after checking its variant with `is_err`
+   --> src/media/audio.rs:180:24
+    |
+176 |         if first_packet.is_err() {
+    |         ------------------------ help: try: `if let Ok(<item>) = first_packet`
+...
+180 |             let data = first_packet.unwrap();
+    |                        ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#unnecessary_unwrap
+    = note: `#[warn(clippy::unnecessary_unwrap)]` on by default
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+   --> src/media/auth_flow.rs:207:19
+    |
+207 |       fn setup() -> (
+    |  ___________________^
+208 | |         AuthFlow,
+209 | |         Arc<AtomicBool>,
+210 | |         Arc<Mutex<Option<PendingAuth>>>,
+211 | |         Arc<Mutex<Option<Result<String, String>>>>,
+212 | |     ) {
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#type_complexity
+    = note: `#[warn(clippy::type_complexity)]` on by default
+
+warning: used `assert_eq!` with a literal bool
+   --> src/media/auth_flow.rs:237:9
+    |
+237 |         assert_eq!(join_flag.load(Ordering::SeqCst), true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+    = note: `#[warn(clippy::bool_assert_comparison)]` on by default
+help: replace it with `assert!(..)`
+    |
+237 -         assert_eq!(join_flag.load(Ordering::SeqCst), true);
+237 +         assert!(join_flag.load(Ordering::SeqCst));
+    |
+
+warning: useless use of `format!`
+   --> src/media/codec/vp8.rs:263:29
+    |
+263 |           let pipeline_desc = format!(
+    |  _____________________________^
+264 | |             "appsrc name=insrc is-live=true do-timestamp=true format=time \
+265 | |              caps=video/x-vp8,framerate=30/1 \
+266 | |              ! vp8dec ! videoconvert ! fakesink sync=false"
+267 | |         );
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#useless_format
+    = note: `#[warn(clippy::useless_format)]` on by default
+help: consider using `.to_string()`
+    |
+263 ~         let pipeline_desc = "appsrc name=insrc is-live=true do-timestamp=true format=time \
+264 +              caps=video/x-vp8,framerate=30/1 \
+265 ~              ! vp8dec ! videoconvert ! fakesink sync=false".to_string();
+    |
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+   --> src/media/iced_viewer.rs:243:19
+    |
+243 |       fn setup() -> (
+    |  ___________________^
+244 | |         VideoViewer,
+245 | |         Arc<AtomicBool>,             // running_call
+246 | |         Arc<AtomicBool>,             // shutdown
+247 | |         Arc<Mutex<Option<Vec<u8>>>>, // local_frame
+248 | |         Arc<Mutex<Option<Vec<u8>>>>, // remote_frame
+249 | |     ) {
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#type_complexity
+
+warning: used `assert_eq!` with a literal bool
+   --> src/rtp/mod.rs:216:9
+    |
+216 |         assert_eq!(pkt.header.marker, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+216 -         assert_eq!(pkt.header.marker, true);
+216 +         assert!(pkt.header.marker);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src/rtp/mod.rs:233:9
+    |
+233 |         assert_eq!(pkt.header.marker, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+233 -         assert_eq!(pkt.header.marker, true);
+233 +         assert!(pkt.header.marker);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src/rtp/mod.rs:258:9
+    |
+258 |         assert_eq!(pkt0.header.marker, false);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+258 -         assert_eq!(pkt0.header.marker, false);
+258 +         assert!(!pkt0.header.marker);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src/rtp/mod.rs:264:9
+    |
+264 |         assert_eq!(pkt1.header.marker, false);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+264 -         assert_eq!(pkt1.header.marker, false);
+264 +         assert!(!pkt1.header.marker);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src/rtp/mod.rs:270:9
+    |
+270 |         assert_eq!(pkt2.header.marker, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+270 -         assert_eq!(pkt2.header.marker, true);
+270 +         assert!(pkt2.header.marker);
+    |
+
+warning: `room_rtc` (lib test) generated 12 warnings (2 duplicates) (run `cargo clippy --fix --lib -p room_rtc --tests -- ` to apply 7 suggestions)
+warning: items after a test module
+    --> src/bin/server.rs:1049:1
+     |
+1049 | mod tests {
+     | ^^^^^^^^^
+...
+1192 | fn main() -> std::io::Result<()> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#items_after_test_module
+     = note: `#[warn(clippy::items_after_test_module)]` on by default
+     = help: move the items to before the test module was defined
+
+warning: `room_rtc` (bin "server" test) generated 1 warning (run `cargo clippy --fix --bin "server" -p room_rtc --tests -- ` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.18s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`

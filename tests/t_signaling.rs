@@ -5,8 +5,10 @@ use openssl::bn::BigNum;
 use openssl::hash::MessageDigest;
 use openssl::pkey::PKey;
 use openssl::rsa::Rsa;
-use openssl::x509::extension::{BasicConstraints, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName};
-use openssl::x509::{X509NameBuilder, X509};
+use openssl::x509::extension::{
+    BasicConstraints, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName,
+};
+use openssl::x509::{X509, X509NameBuilder};
 
 use std::fs;
 use std::io;
@@ -60,7 +62,7 @@ fn create_unique_temp_dir(prefix: &str) -> io::Result<PathBuf> {
 }
 
 /// Genero CA + cert de servidor para "localhost"
-/// 
+///
 /// - certs/localhost+2.pem     
 /// - certs/localhost+2-key.pem
 /// - certs/rootCA.pem
@@ -71,7 +73,9 @@ fn write_test_certs(workdir: &Path) -> io::Result<()> {
     let ca_key = PKey::from_rsa(Rsa::generate(2048).unwrap()).unwrap();
 
     let mut ca_name = X509NameBuilder::new().unwrap();
-    ca_name.append_entry_by_text("CN", "RoomRTC Test CA").unwrap();
+    ca_name
+        .append_entry_by_text("CN", "RoomRTC Test CA")
+        .unwrap();
     let ca_name = ca_name.build();
 
     let mut ca_builder = X509::builder().unwrap();
@@ -129,7 +133,7 @@ fn write_test_certs(workdir: &Path) -> io::Result<()> {
         .set_not_after(&Asn1Time::days_from_now(365).unwrap())
         .unwrap();
 
-    let srv_basic = BasicConstraints::new().critical().build().unwrap(); 
+    let srv_basic = BasicConstraints::new().critical().build().unwrap();
     srv_builder.append_extension(srv_basic).unwrap();
 
     let srv_ku = KeyUsage::new()
@@ -241,8 +245,7 @@ fn recv_eventually(client: &mut TlsClient, timeout: Duration) -> Message {
         match client.recv() {
             Ok(m) => return m,
             Err(e)
-                if e.kind() == io::ErrorKind::TimedOut
-                    || e.kind() == io::ErrorKind::WouldBlock =>
+                if e.kind() == io::ErrorKind::TimedOut || e.kind() == io::ErrorKind::WouldBlock =>
             {
                 if start.elapsed() > timeout {
                     panic!("Timeout esperando mensaje del server");
@@ -267,7 +270,7 @@ fn get_user_list(client: &mut TlsClient) -> Vec<(String, UserStatus)> {
 
 #[test]
 fn signaling_end_to_end_register_login_call_and_persistence() {
-    let _guard = global_test_lock(); 
+    let _guard = global_test_lock();
 
     assert_port_free();
 
@@ -283,8 +286,11 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     let mut test = connect_tls(&workdir);
     let mut test2 = connect_tls(&workdir);
 
-    test.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
-    test2.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
+    test.set_read_timeout(Some(Duration::from_millis(200)))
+        .unwrap();
+    test2
+        .set_read_timeout(Some(Duration::from_millis(200)))
+        .unwrap();
 
     // Register
     test.send(&Message::Register {
@@ -295,12 +301,13 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     .unwrap();
     expect_success(test.recv().unwrap());
 
-    test2.send(&Message::Register {
-        username: "test2".into(),
-        password: "pw2".into(),
-        email: None,
-    })
-    .unwrap();
+    test2
+        .send(&Message::Register {
+            username: "test2".into(),
+            password: "pw2".into(),
+            email: None,
+        })
+        .unwrap();
     expect_success(test2.recv().unwrap());
 
     // Login OK / FAIL
@@ -312,7 +319,8 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     expect_success(test.recv().unwrap());
 
     let mut bad = connect_tls(&workdir);
-    bad.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
+    bad.set_read_timeout(Some(Duration::from_millis(200)))
+        .unwrap();
     bad.send(&Message::Login {
         username: "test".into(),
         password: "WRONG".into(),
@@ -320,11 +328,12 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     .unwrap();
     expect_error(bad.recv().unwrap());
 
-    test2.send(&Message::Login {
-        username: "test2".into(),
-        password: "pw2".into(),
-    })
-    .unwrap();
+    test2
+        .send(&Message::Login {
+            username: "test2".into(),
+            password: "pw2".into(),
+        })
+        .unwrap();
     expect_success(test2.recv().unwrap());
 
     // UserList: ambos Available
@@ -347,7 +356,10 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     // test2 recibe CallIncoming
     let incoming = recv_eventually(&mut test2, Duration::from_secs(2));
     match incoming {
-        Message::CallIncoming { caller, fingerprint } => {
+        Message::CallIncoming {
+            caller,
+            fingerprint,
+        } => {
             assert_eq!(caller, "test");
             assert_eq!(fingerprint, "FP_test");
         }
@@ -355,17 +367,21 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     }
 
     // test2 acepta
-    test2.send(&Message::CallAccept {
-        caller: "test".into(),
-        fingerprint: "FP_test2".into(),
-    })
-    .unwrap();
+    test2
+        .send(&Message::CallAccept {
+            caller: "test".into(),
+            fingerprint: "FP_test2".into(),
+        })
+        .unwrap();
     expect_success(test2.recv().unwrap());
 
     // test recibe CallAccept
     let accepted = recv_eventually(&mut test, Duration::from_secs(2));
     match accepted {
-        Message::CallAccept { caller, fingerprint } => {
+        Message::CallAccept {
+            caller,
+            fingerprint,
+        } => {
             assert_eq!(caller, "test2");
             assert_eq!(fingerprint, "FP_test2");
         }
@@ -415,7 +431,10 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
         other => panic!("Esperaba CallIncoming y llegó: {:?}", other),
     }
 
-    test2.send(&Message::CallReject { caller: "test".into() })
+    test2
+        .send(&Message::CallReject {
+            caller: "test".into(),
+        })
         .unwrap();
     expect_success(test2.recv().unwrap());
 
@@ -427,14 +446,17 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
 
     // registro "test3", reinicio server y hago login
     let mut test3 = connect_tls(&workdir);
-    test3.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
+    test3
+        .set_read_timeout(Some(Duration::from_millis(200)))
+        .unwrap();
 
-    test3.send(&Message::Register {
-        username: "test3".into(),
-        password: "pw3".into(),
-        email: None,
-    })
-    .unwrap();
+    test3
+        .send(&Message::Register {
+            username: "test3".into(),
+            password: "pw3".into(),
+            email: None,
+        })
+        .unwrap();
     expect_success(test3.recv().unwrap());
 
     // Mato server y lo reinicio
@@ -445,20 +467,24 @@ fn signaling_end_to_end_register_login_call_and_persistence() {
     wait_for_listen(Duration::from_secs(4));
 
     let mut test4 = connect_tls(&workdir);
-    test4.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
+    test4
+        .set_read_timeout(Some(Duration::from_millis(200)))
+        .unwrap();
 
-    test4.send(&Message::Login {
-        username: "test3".into(),
-        password: "pw3".into(),
-    })
-    .unwrap();
+    test4
+        .send(&Message::Login {
+            username: "test3".into(),
+            password: "pw3".into(),
+        })
+        .unwrap();
     expect_success(test4.recv().unwrap());
 
-    test4.send(&Message::Login {
-        username: "test".into(),
-        password: "pw1".into(),
-    })
-    .unwrap();
+    test4
+        .send(&Message::Login {
+            username: "test".into(),
+            password: "pw1".into(),
+        })
+        .unwrap();
     expect_success(test4.recv().unwrap());
 
     drop(server);

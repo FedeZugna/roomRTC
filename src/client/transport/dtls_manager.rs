@@ -39,6 +39,10 @@ use udp_dtls::{DtlsAcceptor, DtlsConnector, DtlsStream, Identity, UdpChannel};
 ///
 /// # Retorna
 /// * `JoinHandle<()>` - Handle del hilo spawneado.
+// El hilo necesita recibir por separado cada recurso compartido (stream DTLS, socket,
+// endpoint/asociación SCTP, identidad, canal de rol y parámetros SCTP); se mantiene la
+// firma a propósito para no cambiar la API de los llamadores.
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_dtls_handshake_thread(
     dtls_stream: SharedDtlsStream,
     running_call: Arc<AtomicBool>,

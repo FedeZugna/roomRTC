@@ -260,11 +260,10 @@ mod tests {
     fn test_decoder_has_appsrc() {
         gst_init_once();
 
-        let pipeline_desc = format!(
-            "appsrc name=insrc is-live=true do-timestamp=true format=time \
+        let pipeline_desc = "appsrc name=insrc is-live=true do-timestamp=true format=time \
              caps=video/x-vp8,framerate=30/1 \
              ! vp8dec ! videoconvert ! fakesink sync=false"
-        );
+            .to_string();
 
         let pipeline = gst::parse_launch(&pipeline_desc)
             .unwrap()

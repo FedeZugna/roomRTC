@@ -232,22 +232,23 @@ pub fn run_viewer(
         })
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
     use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+
+    type SetupResult = (
+        VideoViewer,
+        Arc<AtomicBool>,             // running_call
+        Arc<AtomicBool>,             // shutdown
+        Arc<Mutex<Option<Vec<u8>>>>, // local_frame
+        Arc<Mutex<Option<Vec<u8>>>>, // remote_frame
+    );
 
     // Helper para configurar el entorno de prueba
     // Retorna el Viewer y referencias a las variables compartidas para verificar efectos
-    fn setup() -> (
-        VideoViewer,
-        Arc<AtomicBool>, // running_call
-        Arc<AtomicBool>, // shutdown
-        Arc<Mutex<Option<Vec<u8>>>>, // local_frame
-        Arc<Mutex<Option<Vec<u8>>>>, // remote_frame
-    ) {
+    fn setup() -> SetupResult {
         let local_frame = Arc::new(Mutex::new(None));
         let remote_frame = Arc::new(Mutex::new(None));
         let running_call = Arc::new(AtomicBool::new(false));
@@ -271,9 +272,12 @@ mod tests {
 
         // Verifico estado interno
         assert!(!viewer.joined, "Debería iniciar en false (Lobby)");
-        
+
         // Verifico estado compartido
-        assert!(!running_call.load(Ordering::SeqCst), "La llamada no debería estar corriendo al inicio");
+        assert!(
+            !running_call.load(Ordering::SeqCst),
+            "La llamada no debería estar corriendo al inicio"
+        );
     }
 
     #[test]
@@ -287,7 +291,10 @@ mod tests {
         assert!(viewer.joined, "Debería haber cambiado a true (Video View)");
 
         // El flag compartido debe activarse
-        assert!(running_call.load(Ordering::SeqCst), "running_call debería ser true");
+        assert!(
+            running_call.load(Ordering::SeqCst),
+            "running_call debería ser true"
+        );
     }
 
     #[test]
@@ -309,11 +316,17 @@ mod tests {
         assert!(!viewer.joined, "Debería volver al lobby (false)");
 
         // Se detiene la transmisión
-        assert!(!running_call.load(Ordering::SeqCst), "running_call debería pasar a false");
+        assert!(
+            !running_call.load(Ordering::SeqCst),
+            "running_call debería pasar a false"
+        );
 
         // Los buffers deben limpiarse para no mostrar el último frame congelado
         let guard = local_frame.lock().unwrap();
-        assert!(guard.is_none(), "El buffer local debería haberse limpiado (None)");
+        assert!(
+            guard.is_none(),
+            "El buffer local debería haberse limpiado (None)"
+        );
     }
 
     #[test]
@@ -328,9 +341,15 @@ mod tests {
         let _ = viewer.update(Message::SystemClose);
 
         // Debe cortar la llamada
-        assert!(!running_call.load(Ordering::SeqCst), "Debe detener la llamada antes de salir");
+        assert!(
+            !running_call.load(Ordering::SeqCst),
+            "Debe detener la llamada antes de salir"
+        );
 
         // Debe activar el shutdown global
-        assert!(shutdown.load(Ordering::SeqCst), "Debe activar el flag de shutdown");
+        assert!(
+            shutdown.load(Ordering::SeqCst),
+            "Debe activar el flag de shutdown"
+        );
     }
 }

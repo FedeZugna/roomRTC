@@ -111,7 +111,6 @@ pub enum LoginAction {
     SwitchToRegister,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

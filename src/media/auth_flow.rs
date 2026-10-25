@@ -197,30 +197,26 @@ pub fn run_auth_flow(
         })
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
     use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
 
-    // Helper para configurar el entorno de prueba limpio
-    fn setup() -> (
+    type SetupResult = (
         AuthFlow,
         Arc<AtomicBool>,
         Arc<Mutex<Option<PendingAuth>>>,
-        Arc<Mutex<Option<Result<String, String>>>>
-    ) {
+        Arc<Mutex<Option<Result<String, String>>>>,
+    );
+
+    // Helper para configurar el entorno de prueba limpio
+    fn setup() -> SetupResult {
         let join_flag = Arc::new(AtomicBool::new(false));
         let pending_auth = Arc::new(Mutex::new(None));
         let auth_result = Arc::new(Mutex::new(None));
 
-        let flow = AuthFlow::new(
-            join_flag.clone(),
-            pending_auth.clone(),
-            auth_result.clone(),
-        );
+        let flow = AuthFlow::new(join_flag.clone(), pending_auth.clone(), auth_result.clone());
 
         (flow, join_flag, pending_auth, auth_result)
     }
@@ -240,7 +236,7 @@ mod tests {
         let _ = flow.update(AuthMessage::JoinLobby);
 
         // El flag debe haber cambiado a true
-        assert_eq!(join_flag.load(Ordering::SeqCst), true);
+        assert!(join_flag.load(Ordering::SeqCst));
     }
 
     #[test]
@@ -258,7 +254,7 @@ mod tests {
 
         // Deberia haber cambiado la pantalla al Lobby
         assert!(matches!(flow.screen, AuthScreen::Lobby));
-        
+
         // El resultado debería haberse consumido (vuelto a None)
         assert!(auth_result.lock().unwrap().is_none());
     }
@@ -281,7 +277,4 @@ mod tests {
         // El resultado debe haberse consumido
         assert!(auth_result.lock().unwrap().is_none());
     }
-
-
-    
 }

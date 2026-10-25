@@ -2,7 +2,7 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 
-/// Frame VP8 recibido desde RTP 
+/// Frame VP8 recibido desde RTP
 /// Este tipo coincide con `EncodedFrame` usado por tu decoder actual.
 #[derive(Debug, Clone)]
 pub struct JitterFrame {
@@ -14,7 +14,7 @@ pub struct JitterFrame {
 /// Configuración para el jitter buffer
 #[derive(Debug, Clone)]
 pub struct JitterBufferConfig {
-    /// cuánto tiempo queremos "acumular" antes de mostrar 
+    /// cuánto tiempo queremos "acumular" antes de mostrar
     pub target_delay: Duration,
 
     /// cuánto tiempo máximo toleramos
@@ -119,7 +119,6 @@ impl JitterBuffer {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -137,7 +136,7 @@ mod tests {
     fn test_ordering_min_heap() {
         // Verifico que salen ordenados por timestamp (menor a mayor)
         // aunque entren desordenados.
-        
+
         let cfg = JitterBufferConfig {
             target_delay: Duration::from_millis(0), // Sin delay para este test
             max_delay: Duration::from_secs(5),
@@ -145,7 +144,7 @@ mod tests {
         let mut jb = JitterBuffer::new(cfg);
         let now = Instant::now();
 
-        // Insertao desordenado: 300, 100, 200   
+        // Insertao desordenado: 300, 100, 200
         jb.push(make_frame(300, now, 3));
         jb.push(make_frame(100, now, 1));
         jb.push(make_frame(200, now, 2));
@@ -171,20 +170,26 @@ mod tests {
             max_delay: Duration::from_secs(1),
         };
         let mut jb = JitterBuffer::new(cfg);
-        
+
         // Simulamos el tiempo con Instant
         let start = Instant::now();
-        
+
         // Llega un frame en t=0
         jb.push(make_frame(1000, start, 1));
 
         // Intento sacar inmediatamente (t=0)
         // Debería ser None porque target_delay es 100ms
-        assert!(jb.pop_ready(start).is_none(), "No debería salir inmediatamente");
+        assert!(
+            jb.pop_ready(start).is_none(),
+            "No debería salir inmediatamente"
+        );
 
         // Intento sacar a los 50ms
         let t_50 = start + Duration::from_millis(50);
-        assert!(jb.pop_ready(t_50).is_none(), "A los 50ms debería seguir buffereando");
+        assert!(
+            jb.pop_ready(t_50).is_none(),
+            "A los 50ms debería seguir buffereando"
+        );
 
         // Intento sacar a los 101ms (Pasó el target)
         let t_101 = start + Duration::from_millis(101);
@@ -211,7 +216,9 @@ mod tests {
         jb.push(make_frame(200, arrival_new, 2));
 
         // 1er pop: sale el más nuevo (ts=200)
-        let res1 = jb.pop_ready(now).expect("Debería salir el frame nuevo (ts=200)");
+        let res1 = jb
+            .pop_ready(now)
+            .expect("Debería salir el frame nuevo (ts=200)");
         assert_eq!(res1[0], 2);
 
         // 2do pop: queda el viejo (ts=100), se descarta por max_delay -> None
@@ -246,8 +253,8 @@ mod tests {
         let start = Instant::now();
 
         // Llegan paquetes (simulo llegada en t=0)
-        jb.push(make_frame(10, start, 10)); 
-        jb.push(make_frame(30, start, 30)); 
+        jb.push(make_frame(10, start, 10));
+        jb.push(make_frame(30, start, 30));
         jb.push(make_frame(20, start, 20)); // Desordenado
 
         // t=0: Buffering...
@@ -255,7 +262,7 @@ mod tests {
 
         // t=60ms: Ya pasó el target delay, debería poder drenar todo en orden
         let now = start + Duration::from_millis(60);
-        
+
         let f1 = jb.pop_ready(now).unwrap();
         assert_eq!(f1[0], 30);
 

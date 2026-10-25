@@ -134,7 +134,6 @@ pub enum RegisterAction {
     BackToLogin,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

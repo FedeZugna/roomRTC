@@ -65,7 +65,7 @@ pub struct ServerState {
 
     /// guardamos un canal de salida para cada usuario.
     /// username -> Sender<Message>
-    pub client_senders: HashMap<String, mpsc::Sender<Message>>, // 
+    pub client_senders: HashMap<String, mpsc::Sender<Message>>, //
 
     /// Logger para registrar eventos del servidor
     pub logger: Logger,
@@ -1043,6 +1043,18 @@ fn write_message<S: Write>(stream: &mut S, message: &Message) -> std::io::Result
     Ok(())
 }
 
+fn main() -> std::io::Result<()> {
+    let server = SignalingServer::new(
+        "127.0.0.1:8443",            // Dirección y puerto
+        "users.txt".to_string(),     // Archivo de usuarios
+        100,                         // Máximo de conexiones
+        "certs/localhost+2.pem",     // Certificado
+        "certs/localhost+2-key.pem", // Clave privada
+    )?;
+
+    server.run()
+}
+
 // ==================== TESTS ====================
 
 #[cfg(test)]
@@ -1077,7 +1089,7 @@ mod tests {
     #[test]
     fn test_duplicate_login() {
         let filename = "test_users_login.txt";
-        clean_env(filename); 
+        clean_env(filename);
 
         let mut state = ServerState::new(filename.to_string(), 10);
 
@@ -1086,7 +1098,7 @@ mod tests {
             .register_user("user1".to_string(), "pass".to_string(), None)
             .expect("Fallo al registrar usuario");
 
-        // Primer Login 
+        // Primer Login
         state
             .login(
                 "user1".to_string(),
@@ -1101,7 +1113,7 @@ mod tests {
             "pass".to_string(),
             "127.0.0.1".to_string(),
         );
-        
+
         assert!(result.is_err(), "El segundo login debería haber fallado");
         assert_eq!(result.unwrap_err(), "Usuario ya está conectado");
 
@@ -1123,7 +1135,7 @@ mod tests {
             .register_user("bob".to_string(), "pass2".to_string(), None)
             .unwrap();
 
-        // Login 
+        // Login
         state
             .login(
                 "alice".to_string(),
@@ -1140,8 +1152,14 @@ mod tests {
             .unwrap();
 
         // Verifico estado inicial
-        assert_eq!(state.sessions.get("alice").unwrap().status, UserStatus::Available);
-        assert_eq!(state.sessions.get("bob").unwrap().status, UserStatus::Available);
+        assert_eq!(
+            state.sessions.get("alice").unwrap().status,
+            UserStatus::Available
+        );
+        assert_eq!(
+            state.sessions.get("bob").unwrap().status,
+            UserStatus::Available
+        );
 
         // Inicio llamada
         let result = state.start_call("alice", "bob");
@@ -1155,7 +1173,12 @@ mod tests {
         assert_eq!(state.sessions.get("bob").unwrap().status, UserStatus::Busy);
 
         // Verifico que la llamada existe en la lista
-        assert!(state.calls.iter().any(|c| c.caller == "alice" && c.callee == "bob"));
+        assert!(
+            state
+                .calls
+                .iter()
+                .any(|c| c.caller == "alice" && c.callee == "bob")
+        );
 
         // Termino llamada
         let other_user = state.end_call("alice");
@@ -1170,22 +1193,10 @@ mod tests {
             state.sessions.get("bob").unwrap().status,
             UserStatus::Available
         );
-        
+
         // Verifico que la lista de llamadas está vacía
         assert!(state.calls.is_empty());
 
         clean_env(filename);
     }
-}
-
-fn main() -> std::io::Result<()> {
-    let server = SignalingServer::new(
-        "127.0.0.1:8443",            // Dirección y puerto
-        "users.txt".to_string(),     // Archivo de usuarios
-        100,                         // Máximo de conexiones
-        "certs/localhost+2.pem",     // Certificado
-        "certs/localhost+2-key.pem", // Clave privada
-    )?;
-
-    server.run()
 }

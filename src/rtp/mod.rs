@@ -134,7 +134,7 @@ impl RtpLiteReassembler {
 
         if pkt.header.marker {
             let mut frame = Vec::new();
-            for (_seq, part) in self.frags.iter() {
+            for part in self.frags.values() {
                 frame.extend_from_slice(part);
             }
             self.frags.clear();
@@ -213,7 +213,7 @@ mod tests {
         ];
         let pkt = RtpLitePacket::parse(&header_only).expect("Debe parsear el header sin payload");
         assert_eq!(pkt.payload.len(), 0);
-        assert_eq!(pkt.header.marker, true);
+        assert!(pkt.header.marker);
     }
 
     // --- Tests para RtpLiteSender (packetize_frame) ---
@@ -230,7 +230,7 @@ mod tests {
 
         // El paquete debe tener el marcador (marker) a true
         let pkt = RtpLitePacket::parse(&packets[0]).unwrap();
-        assert_eq!(pkt.header.marker, true);
+        assert!(pkt.header.marker);
         assert_eq!(pkt.header.payload_type, 97);
         assert_eq!(pkt.header.sequence_number, 0); // Empieza en 0
         assert_eq!(pkt.header.timestamp, 1000);
@@ -255,19 +255,19 @@ mod tests {
         // Paquete 1 (Seq 0)
         let pkt0 = RtpLitePacket::parse(&packets[0]).unwrap();
         assert_eq!(pkt0.header.sequence_number, 0);
-        assert_eq!(pkt0.header.marker, false);
+        assert!(!pkt0.header.marker);
         assert_eq!(pkt0.payload, vec![1, 2, 3]);
 
         // Paquete 2 (Seq 1)
         let pkt1 = RtpLitePacket::parse(&packets[1]).unwrap();
         assert_eq!(pkt1.header.sequence_number, 1);
-        assert_eq!(pkt1.header.marker, false);
+        assert!(!pkt1.header.marker);
         assert_eq!(pkt1.payload, vec![4, 5, 6]);
 
         // Paquete 3 (Seq 2) - Marker debe ser true
         let pkt2 = RtpLitePacket::parse(&packets[2]).unwrap();
         assert_eq!(pkt2.header.sequence_number, 2);
-        assert_eq!(pkt2.header.marker, true);
+        assert!(pkt2.header.marker);
         assert_eq!(pkt2.payload, vec![7, 8]);
     }
 

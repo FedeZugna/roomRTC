@@ -20,7 +20,6 @@ pub fn start_audio_encoder(
     // Pipeline: Micrófono -> Convertir -> Resamplear -> Opus -> AppSink
     let pipeline_desc = "autoaudiosrc ! audioconvert ! audioresample ! opusenc ! rtpopuspay ! appsink name=sink emit-signals=true sync=false";
 
-    
     let pipeline = gst::parse_launch(pipeline_desc)?
         .downcast::<gst::Pipeline>()
         .map_err(|_| "Error casteando pipeline audio encoder")?;
@@ -144,12 +143,11 @@ pub fn start_audio_player(
     Ok(tx)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
     use std::thread;
+    use std::time::Duration;
 
     // Helper para inicializar GStreamer una sola vez
     fn init_gst() {
@@ -164,20 +162,27 @@ mod tests {
 
         //Inicio encoder
         let result = start_audio_encoder(muted.clone(), shutdown.clone());
-        
+
         // Verifico que no haya error al crear el pipeline
-        assert!(result.is_ok(), "El encoder debería iniciar correctamente (verifica que tengas micrófono)");
+        assert!(
+            result.is_ok(),
+            "El encoder debería iniciar correctamente (verifica que tengas micrófono)"
+        );
         let rx = result.unwrap();
 
         // Intento recibir al menos un paquete de datos (timeout corto)
         let first_packet = rx.recv_timeout(Duration::from_secs(2));
-        
-        if first_packet.is_err() {
-            println!("ADVERTENCIA: No se recibieron datos de audio. ¿Tienes micrófono?");
-        } else {
-            assert!(first_packet.is_ok());
-            let data = first_packet.unwrap();
-            assert!(!data.is_empty(), "El vector de audio no debería estar vacío");
+
+        match first_packet {
+            Err(_) => {
+                println!("ADVERTENCIA: No se recibieron datos de audio. ¿Tienes micrófono?");
+            }
+            Ok(data) => {
+                assert!(
+                    !data.is_empty(),
+                    "El vector de audio no debería estar vacío"
+                );
+            }
         }
 
         // Shutdown
@@ -194,10 +199,10 @@ mod tests {
 
         let rx = match start_audio_encoder(muted.clone(), shutdown.clone()) {
             Ok(r) => r,
-            Err(_) => return, 
+            Err(_) => return,
         };
 
-        // Espero flujo de datos inicial 
+        // Espero flujo de datos inicial
         let _ = rx.recv_timeout(Duration::from_secs(1));
 
         // ACTIVO MUTE
@@ -210,16 +215,22 @@ mod tests {
         thread::sleep(Duration::from_millis(500));
 
         // Verifico que el canal sigue vacío
-        assert!(rx.try_recv().is_err(), "No deberíamos recibir datos mientras está muteado");
+        assert!(
+            rx.try_recv().is_err(),
+            "No deberíamos recibir datos mientras está muteado"
+        );
 
         // DESACTIVO MUTE
         muted.store(false, Ordering::SeqCst);
         thread::sleep(Duration::from_millis(500));
 
         // VerificO que vuelven a llegar datos
- 
+
         let packet = rx.recv_timeout(Duration::from_secs(2));
-        assert!(packet.is_ok(), "Deberíamos volver a recibir datos al desmutear");
+        assert!(
+            packet.is_ok(),
+            "Deberíamos volver a recibir datos al desmutear"
+        );
 
         shutdown.store(true, Ordering::SeqCst);
     }
@@ -232,14 +243,17 @@ mod tests {
         //Inicio player
         let result = start_audio_player(shutdown.clone());
         assert!(result.is_ok(), "El player debería iniciar correctamente");
-        
+
         let tx = result.unwrap();
 
         // Simulo envío de datos
-        let dummy_data = vec![0u8; 100]; 
+        let dummy_data = vec![0u8; 100];
         let send_result = tx.send(dummy_data);
-        
-        assert!(send_result.is_ok(), "Deberíamos poder enviar datos al canal del player");
+
+        assert!(
+            send_result.is_ok(),
+            "Deberíamos poder enviar datos al canal del player"
+        );
 
         // Shutdown
         shutdown.store(true, Ordering::SeqCst);
@@ -250,7 +264,7 @@ mod tests {
     fn test_loopback_integration() {
         // Este test conecta la salida del encoder a la entrada del player.
         init_gst();
-        
+
         let muted = Arc::new(AtomicBool::new(false));
         let shutdown = Arc::new(AtomicBool::new(false));
 
@@ -267,7 +281,7 @@ mod tests {
 
         // Simulo bucle de transmisión por 1 segundo
         let start = std::time::Instant::now();
-        
+
         while start.elapsed().as_secs() < 1 {
             if let Ok(data) = rx.recv_timeout(Duration::from_millis(100)) {
                 // Paso lo grabado directo al reproductor

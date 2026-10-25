@@ -34,11 +34,11 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 **Pasos:** A envía `hola desde A` (con Enter). B envía `hola desde B` (con el botón Enviar). A envía `uno`, `dos` y `tres` seguidos.
 
-**Esperado:** cada mensaje aparece una sola vez del otro lado, en orden, como `Participante: …`. Del lado propio aparece como `Yo: …`, sin "(no enviado)".
+**Esperado:** cada mensaje aparece una sola vez del otro lado, en orden, con el nombre de quien lo envió (`<usuario A>: …` en B). Del lado propio aparece con el nombre propio, sin "(no enviado)".
 
 | Resultado | Observaciones |
 |-----------|---------------|
-| | |
+| OK | |
 
 ## M2 — Chat durante la transferencia de un archivo
 
@@ -81,7 +81,7 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 **Pasos:** en cuanto aparece la pantalla de videollamada (antes de que se vea el video remoto), A envía `temprano`.
 
-**Esperado:** `temprano` llega a B, **o** queda del lado de A como `Yo: temprano (no enviado)`. Nunca debe pasar que no llegue y tampoco quede marcado.
+**Esperado:** `temprano` llega a B, **o** queda del lado de A como `<usuario A>: temprano (no enviado)`. Nunca debe pasar que no llegue y tampoco quede marcado.
 
 | Campo | Valor |
 |-------|-------|
@@ -98,8 +98,8 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Campo | Valor |
 |-------|-------|
-| ¿A volvió al lobby? | |
-| ¿B volvió al lobby (corte remoto)? | |
+| ¿A volvió al lobby? | OK |
+| ¿B volvió al lobby (corte remoto)? | OK |
 | ¿Algún proceso quedó colgado al cerrar? ¿Cuál y cómo se terminó? | |
 | Resultado | |
 | Observaciones | |
@@ -117,16 +117,17 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 | Mensajes relevantes en la consola de cada cliente | |
 | ¿Confirma o refuta la hipótesis? | |
 
-## M6 — Etiquetas y ancho del panel
+## M6 — Etiquetas y tamaño del panel
 
 **Pasos:** revisar el panel de chat durante M1 a M3, también con el modal de oferta visible (M2).
 
 | Ítem | Esperado | ¿Se confirma? / Observaciones |
 |------|----------|-------------------------------|
-| Etiqueta propia | `Yo: <texto>` | |
-| Etiqueta del participante | `Participante: <texto>` | |
-| Mensaje no enviado | `Yo: <texto> (no enviado)`, en rojo | |
-| Ancho del panel (300 px) | Entra junto a los dos videos sin cortarse | |
+| Etiqueta propia | `<usuario propio>: <texto>` | |
+| Etiqueta del participante | `<usuario del par>: <texto>`, en los dos sentidos (A llama a B, y B llama a A) | |
+| Mensaje no enviado | `<usuario propio>: <texto> (no enviado)`, en rojo | |
+| Ancho del panel (360 px) | Entra junto a los dos videos sin cortarse | |
+| Campo de texto | Ocupa el ancho del panel y tiene un alto cómodo para escribir | |
 | Mensajes largos o muchos mensajes | Se pueden leer, y el historial tiene scroll | |
 | Con el modal de oferta visible | Se registra si el campo de chat se puede usar | |
 

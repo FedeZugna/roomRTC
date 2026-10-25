@@ -1,0 +1,51 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+warning: field `pending_callee` is never read
+   --> src/media/unified_app.rs:175:5
+    |
+144 | pub struct UnifiedApp {
+    |            ---------- field in this struct
+...
+175 |     pending_callee: Option<String>,
+    |     ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `room_rtc` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 12 tests
+test media::unified_app::tests::chat_3_1_actualiza_borrador ... ok
+test media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick ... ok
+test media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso ... ok
+test media::unified_app::tests::chat_3_3_no_envia_borrador_invalido ... ok
+test media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat ... ok
+test media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior ... ok
+test media::unified_app::tests::chat_3_9_flujo_de_archivos_sin_cambios ... ok
+test media::unified_app::tests::chat_3_6_muestra_no_enviado ... ok
+test media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador ... ok
+test media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado ... ok
+test media::unified_app::tests::chat_3_4_muestra_mensaje_recibido ... ok
+test media::unified_app::tests::chat_3_12_muestra_nombres_de_usuario ... FAILED
+
+failures:
+
+---- media::unified_app::tests::chat_3_12_muestra_nombres_de_usuario stdout ----
+[Lobby] Llamando a bob (click)
+[App] Llamada aceptada! Iniciando video...
+
+thread 'media::unified_app::tests::chat_3_12_muestra_nombres_de_usuario' (790418) panicked at src/media/unified_app.rs:1994:9:
+assertion `left == right` failed
+  left: ["Yo: hola", "Participante: hey"]
+ right: ["alice: hola", "bob: hey"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    media::unified_app::tests::chat_3_12_muestra_nombres_de_usuario
+
+test result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 118 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

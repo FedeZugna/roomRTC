@@ -169,6 +169,10 @@ pub struct UnifiedApp {
     // Chat de la llamada actual
     chat: ChatState,
     call_generation: Arc<AtomicU64>,
+    // Nombre del otro participante de la llamada (si se conoce) y del usuario
+    // al que llamamos mientras no responde
+    peer_username: Option<String>,
+    pending_callee: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -229,6 +233,8 @@ impl UnifiedApp {
             is_muted: false,
             chat: ChatState::default(),
             call_generation: config.call_generation,
+            peer_username: None,
+            pending_callee: None,
         }
     }
 
@@ -348,6 +354,8 @@ impl UnifiedApp {
 
             AppMessage::CallUserByClick { username } => {
                 println!("[Lobby] Llamando a {} (click)", username);
+                // Se recuerda para mostrar su nombre en el chat si acepta
+                self.pending_callee = Some(username.clone());
                 if let Some(tx) = &self.signaling_tx {
                     let _ = tx.send(SignalingCommand::CallRequest { callee: username });
                 }
@@ -373,13 +381,14 @@ impl UnifiedApp {
                     // Send accept command to signaling thread
                     if let Some(ref tx) = self.signaling_tx {
                         let _ = tx.send(SignalingCommand::AcceptCall {
-                            caller: caller_name,
+                            caller: caller_name.clone(),
                         });
                     }
 
                     // Accept the call and transition to video
                     self.running_call.store(true, Ordering::SeqCst);
                     self.start_call_chat();
+                    self.peer_username = Some(caller_name);
                     self.screen = AppScreen::VideoCall {
                         joined: true,
                         file_path: String::new(),
@@ -418,6 +427,7 @@ impl UnifiedApp {
                 println!("[App] Llamada aceptada! Iniciando video...");
                 self.running_call.store(true, Ordering::SeqCst);
                 self.start_call_chat();
+                self.peer_username = self.pending_callee.take();
                 self.screen = AppScreen::VideoCall {
                     joined: true,
                     file_path: String::new(),
@@ -441,6 +451,7 @@ impl UnifiedApp {
                         }
                         SignalingResponse::CallRejected => {
                             println!("[Lobby] El usuario rechazó la llamada");
+                            self.pending_callee = None;
                             // Podrías mostrar un mensaje en la UI si quieres
                         }
                         SignalingResponse::CallEnded => {
@@ -515,6 +526,7 @@ impl UnifiedApp {
                 // termina la llamada, al lobby
                 self.running_call.store(false, Ordering::SeqCst);
                 self.chat.reset();
+                self.peer_username = None;
                 if let Ok(mut lf) = self.local_frame.lock() {
                     *lf = None;
                 }
@@ -533,6 +545,7 @@ impl UnifiedApp {
                 println!("[App] El otro usuario terminó la llamada");
                 self.running_call.store(false, Ordering::SeqCst);
                 self.chat.reset();
+                self.peer_username = None;
                 if let Ok(mut lf) = self.local_frame.lock() {
                     *lf = None;
                 }
@@ -1220,7 +1233,7 @@ impl UnifiedApp {
             .history
             .iter()
             .fold(column![].spacing(6), |col, entry| {
-                let line = text(chat_line(entry)).size(14);
+                let line = text(self.chat_line(entry)).size(14);
                 let line = if entry.not_sent {
                     line.color(iced::Color::from_rgb(0.9, 0.3, 0.3))
                 } else {
@@ -1232,19 +1245,27 @@ impl UnifiedApp {
         let input = text_input("Escribí un mensaje...", &self.chat.draft)
             .on_input(AppMessage::ChatDraftChanged)
             .on_submit(AppMessage::ChatSend)
-            .padding(8);
+            .width(Length::Fill)
+            .padding(10)
+            .size(16);
 
-        let send_button = button(text("Enviar"))
-            .padding(8)
+        let send_button = button(text("Enviar").size(16))
+            .padding(10)
             .on_press(AppMessage::ChatSend);
 
+        // El historial toma el alto que sobra: el título y la fila de entrada
+        // se ubican primero con su alto propio y no quedan aplastados cuando
+        // la ventana es baja (design D6)
         column![
             text("Chat").size(16),
-            scrollable(lines).height(Length::Fixed(VIDEO_HEIGHT_F32 - 90.0)),
-            row![input, send_button].spacing(8),
+            scrollable(lines).height(Length::Fill),
+            row![input, send_button]
+                .spacing(8)
+                .align_y(iced::alignment::Vertical::Center),
         ]
         .spacing(10)
-        .width(Length::Fixed(300.0))
+        .width(Length::Fixed(360.0))
+        .height(Length::Fill)
         .into()
     }
 
@@ -1268,6 +1289,13 @@ impl UnifiedApp {
         }
     }
 
+    /// Línea del historial con el nombre de su autor (design D6).
+    fn chat_line(&self, entry: &ChatEntry) -> String {
+        let own = self.current_username.as_deref().unwrap_or("Yo");
+        let peer = self.peer_username.as_deref().unwrap_or("Participante");
+        format_chat_line(entry, own, peer)
+    }
+
     // Llamada nueva: nueva generación y chat vacío. Lo que quede de la llamada
     // anterior en los canales se descarta por generación (design D2).
     fn start_call_chat(&mut self) {
@@ -1288,11 +1316,13 @@ impl UnifiedApp {
 
 /// Texto de una línea del historial del chat. Se muestra literal, sin
 /// interpretar marcado.
-fn chat_line(entry: &ChatEntry) -> String {
+fn format_chat_line(entry: &ChatEntry, own_name: &str, peer_name: &str) -> String {
     match entry.author {
-        ChatAuthor::Own { .. } if entry.not_sent => format!("Yo: {} (no enviado)", entry.text),
-        ChatAuthor::Own { .. } => format!("Yo: {}", entry.text),
-        ChatAuthor::Peer => format!("Participante: {}", entry.text),
+        ChatAuthor::Own { .. } if entry.not_sent => {
+            format!("{}: {} (no enviado)", own_name, entry.text)
+        }
+        ChatAuthor::Own { .. } => format!("{}: {}", own_name, entry.text),
+        ChatAuthor::Peer => format!("{}: {}", peer_name, entry.text),
     }
 }
 
@@ -1849,7 +1879,7 @@ mod tests {
         let mut fallido = own(2, "dos");
         fallido.not_sent = true;
         assert_eq!(history(&app), vec![own(1, "uno"), fallido]);
-        let lines: Vec<String> = app.chat.history.iter().map(chat_line).collect();
+        let lines: Vec<String> = app.chat.history.iter().map(|e| app.chat_line(e)).collect();
         assert!(!lines[0].contains("no enviado"));
         assert!(lines[1].contains("dos") && lines[1].contains("no enviado"));
         let _ = app.view();
@@ -1951,8 +1981,55 @@ mod tests {
         let mut fallido = own(1, "Hola");
         fallido.not_sent = true;
         assert_eq!(history(&app), vec![fallido]);
-        let lines: Vec<String> = app.chat.history.iter().map(chat_line).collect();
+        let lines: Vec<String> = app.chat.history.iter().map(|e| app.chat_line(e)).collect();
         assert!(lines[0].contains("Hola") && lines[0].contains("no enviado"));
         let _ = app.view();
+    }
+
+    #[test]
+    fn chat_3_12_muestra_nombres_de_usuario() {
+        let (mut app, _sig_rx, sctp_rx, notif_tx) = make_app_with_all_channels();
+        app.current_username = Some("alice".to_string());
+        let lines = |app: &UnifiedApp| -> Vec<String> {
+            app.chat.history.iter().map(|e| app.chat_line(e)).collect()
+        };
+        let recibir = |app: &mut UnifiedApp, text: &str| {
+            let _ = notif_tx.send(SctpNotification::ChatReceived {
+                generation: current_gen(app),
+                text: text.to_string(),
+            });
+            tick(app);
+        };
+
+        // Llamo yo: el par es el callee
+        force_lobby(&mut app);
+        let _ = app.update(AppMessage::CallUserByClick {
+            username: "bob".to_string(),
+        });
+        let _ = app.update(AppMessage::CallWasAccepted);
+        type_and_send(&mut app, "hola");
+        recibir(&mut app, "hey");
+        assert_eq!(lines(&app), vec!["alice: hola", "bob: hey"]);
+
+        // Termina la llamada: se olvida el par
+        let _ = app.update(AppMessage::EndCall);
+        assert_eq!(app.peer_username, None);
+
+        // Me llaman: el par es el caller
+        let _ = app.update(AppMessage::IncomingCall {
+            caller: "bob".to_string(),
+        });
+        let _ = app.update(AppMessage::AcceptCall);
+        recibir(&mut app, "qué tal");
+        assert_eq!(lines(&app), vec!["bob: qué tal"]);
+
+        // Llamada sin par conocido
+        let _ = app.update(AppMessage::RemoteCallEnded);
+        let _ = app.update(AppMessage::JoinCall);
+        recibir(&mut app, "anónimo");
+        assert_eq!(lines(&app), vec!["Participante: anónimo"]);
+
+        let _ = app.view();
+        drop(sctp_rx);
     }
 }

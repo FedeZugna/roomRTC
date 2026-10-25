@@ -1,4 +1,5 @@
 pub mod candidates;
+pub mod chat;
 pub mod client;
 pub mod media;
 pub mod rtcp;

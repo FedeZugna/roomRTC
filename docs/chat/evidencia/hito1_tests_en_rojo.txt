@@ -1,0 +1,136 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+warning: field `next_id` is never read
+  --> src/chat.rs:72:5
+   |
+69 | pub struct ChatState {
+   |            --------- field in this struct
+...
+72 |     next_id: u64,
+   |     ^^^^^^^
+   |
+   = note: `ChatState` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `room_rtc` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.04s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 12 tests
+test chat::tests::chat_1_4_conserva_espacios_del_texto ... FAILED
+test chat::tests::chat_1_6_descarta_payload_invalido_sin_panic ... FAILED
+test chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios ... FAILED
+test chat::tests::chat_1_12_valores_de_produccion ... FAILED
+test chat::tests::chat_1_1_envia_mensaje_valido ... FAILED
+test chat::tests::chat_1_5_codifica_y_decodifica_utf8 ... FAILED
+test chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope ... FAILED
+test chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa ... FAILED
+test chat::tests::chat_1_11_nueva_sesion_arranca_vacia ... FAILED
+test chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite ... FAILED
+test chat::tests::chat_1_8_marca_no_enviado_por_id_local ... FAILED
+test chat::tests::chat_1_9_recibe_en_orden_sin_duplicados ... FAILED
+
+failures:
+
+---- chat::tests::chat_1_4_conserva_espacios_del_texto stdout ----
+
+thread 'chat::tests::chat_1_4_conserva_espacios_del_texto' (658881) panicked at src/chat.rs:194:9:
+assertion `left == right` failed
+  left: Ok("")
+ right: Ok("  hola  ")
+
+---- chat::tests::chat_1_6_descarta_payload_invalido_sin_panic stdout ----
+
+thread 'chat::tests::chat_1_6_descarta_payload_invalido_sin_panic' (658883) panicked at src/chat.rs:210:9:
+assertion `left == right` failed
+  left: Ok("")
+ right: Err(InvalidUtf8)
+
+---- chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios stdout ----
+
+thread 'chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios' (658879) panicked at src/chat.rs:171:9:
+assertion `left == right` failed
+  left: Ok(OutgoingChat { id: 0, text: "" })
+ right: Err(Empty)
+
+---- chat::tests::chat_1_12_valores_de_produccion stdout ----
+
+thread 'chat::tests::chat_1_12_valores_de_produccion' (658877) panicked at src/chat.rs:287:9:
+assertion `left == right` failed
+  left: 0
+ right: 4096
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- chat::tests::chat_1_1_envia_mensaje_valido stdout ----
+
+thread 'chat::tests::chat_1_1_envia_mensaje_valido' (658878) panicked at src/chat.rs:157:9:
+assertion `left == right` failed
+  left: Ok(OutgoingChat { id: 0, text: "" })
+ right: Ok(OutgoingChat { id: 1, text: "Hola" })
+
+---- chat::tests::chat_1_5_codifica_y_decodifica_utf8 stdout ----
+
+thread 'chat::tests::chat_1_5_codifica_y_decodifica_utf8' (658882) panicked at src/chat.rs:204:9:
+assertion `left == right` failed
+  left: 0
+ right: 11
+
+---- chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope stdout ----
+
+thread 'chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope' (658875) panicked at src/chat.rs:269:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Peer, text: "b", not_sent: false }, ChatEntry { author: Peer, text: "c", not_sent: false }, ChatEntry { author: Peer, text: "d", not_sent: false }]
+
+---- chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa stdout ----
+
+thread 'chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa' (658884) panicked at src/chat.rs:223:9:
+assertion `left == right` failed
+  left: Ok(OutgoingChat { id: 0, text: "" })
+ right: Err(NotInCall)
+
+---- chat::tests::chat_1_11_nueva_sesion_arranca_vacia stdout ----
+
+thread 'chat::tests::chat_1_11_nueva_sesion_arranca_vacia' (658876) panicked at src/chat.rs:282:9:
+assertion failed: state.draft.is_empty()
+
+---- chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite stdout ----
+
+thread 'chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite' (658880) panicked at src/chat.rs:182:9:
+assertion `left == right` failed
+  left: Ok(())
+ right: Err(TooLong { len: 17, max: 16 })
+
+---- chat::tests::chat_1_8_marca_no_enviado_por_id_local stdout ----
+
+thread 'chat::tests::chat_1_8_marca_no_enviado_por_id_local' (658885) panicked at src/chat.rs:240:9:
+assertion `left == right` failed
+  left: (Ok(0), Ok(0))
+ right: (Ok(1), Ok(2))
+
+---- chat::tests::chat_1_9_recibe_en_orden_sin_duplicados stdout ----
+
+thread 'chat::tests::chat_1_9_recibe_en_orden_sin_duplicados' (658886) panicked at src/chat.rs:257:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Peer, text: "uno", not_sent: false }, ChatEntry { author: Peer, text: "dos", not_sent: false }, ChatEntry { author: Peer, text: "tres", not_sent: false }]
+
+
+failures:
+    chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope
+    chat::tests::chat_1_11_nueva_sesion_arranca_vacia
+    chat::tests::chat_1_12_valores_de_produccion
+    chat::tests::chat_1_1_envia_mensaje_valido
+    chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios
+    chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite
+    chat::tests::chat_1_4_conserva_espacios_del_texto
+    chat::tests::chat_1_5_codifica_y_decodifica_utf8
+    chat::tests::chat_1_6_descarta_payload_invalido_sin_panic
+    chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa
+    chat::tests::chat_1_8_marca_no_enviado_por_id_local
+    chat::tests::chat_1_9_recibe_en_orden_sin_duplicados
+
+test result: FAILED. 0 passed; 12 failed; 0 ignored; 0 measured; 96 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

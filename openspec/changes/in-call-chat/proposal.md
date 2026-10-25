@@ -50,5 +50,5 @@ Hoy, durante una videollamada, los dos participantes solo pueden comunicarse por
     - el panel en la vista y el consumo en `FrameUpdate`.
   - `src/bin/cliente.rs`: los hilos SCTP RX y TX usan las funciones de `sctp_chat.rs` (un `match` sobre lo recibido, y el envío de chat con su reporte de fallos). También crea la generación de llamada.
 - **Sin cambios:** `src/bin/server.rs`, el protocolo de señalización, las dependencias de `Cargo.toml` y el formato de los streams de archivos.
-- **Tests:** tests nuevos `chat_1_*` a `chat_4_*` (34 en total) y el test del harness. Los tests existentes de `unified_app` y `tests/*.rs` no cambian.
+- **Tests:** tests nuevos `chat_1_*` a `chat_4_*` (35 en total) y el test del harness. Los tests existentes de `unified_app` y `tests/*.rs` no cambian.
 - **Documentación:** `docs/chat/exploracion.md` (Hito 0) y las salidas de RED y de los gates de cada hito en `docs/chat/evidencia/`.

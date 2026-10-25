@@ -116,12 +116,30 @@ Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón 
 
 **Panel de chat.**
 - **Hecho.** `view_chat` (`unified_app.rs:1217`) se ubica en la misma fila que los dos videos. El modal de oferta de archivos sigue superpuesto sobre todo el contenido, como antes.
-- **Hecho.** Cada línea es un widget `text`, que muestra el texto literal sin interpretar marcado. La arma `chat_line` (`:1291-1297`), con estas etiquetas:
-  - Mensaje propio: `Yo: <texto>`.
-  - Mensaje propio no enviado: `Yo: <texto> (no enviado)`, en rojo (`:1225`).
-  - Mensaje del participante: `Participante: <texto>`. La app no conoce el nombre del otro usuario durante la llamada.
-- **Hecho.** El `text_input` muestra el borrador, lo actualiza con `ChatDraftChanged` y envía con Enter mediante `on_submit(AppMessage::ChatSend)` (`:1232-1234`). Al lado hay un botón "Enviar".
-- **Supuesto.** Las etiquetas y la ubicación del panel se confirman en la prueba manual del Hito 4 (ver Open Questions).
+- **Hecho.** Cada línea es un widget `text`, que muestra el texto literal sin interpretar marcado. La arma `chat_line`, que recibe los dos nombres. El método `UnifiedApp::chat_line` se los pasa (3.12, cambio pedido tras la prueba manual):
+  - Mensaje propio: `<current_username>: <texto>`. Si no hay usuario logueado, como en algunos tests, se usa `Yo`.
+  - Mensaje propio no enviado: `<current_username>: <texto> (no enviado)`, en rojo.
+  - Mensaje del participante: `<peer_username>: <texto>`. Si no se conoce el nombre del par, se usa `Participante`.
+- **De dónde sale `peer_username`** (campo de `UnifiedApp`):
+  - **Hecho.** Si me llamaron, el nombre del caller está en `incoming_call` cuando llega `AcceptCall`, y se guarda al entrar a `VideoCall`.
+  - **Hecho.** Si llamé yo, `CallWasAccepted` no trae el nombre, porque `SignalingResponse::CallAccepted` no lo lleva. El nombre del callee solo se conoce en `CallUserByClick`. Por eso se guarda en un campo `pending_callee`, que pasa a `peer_username` en `CallWasAccepted` y se limpia en `CallRejected`. Si se hacen dos llamadas antes de que una se acepte, queda el último callee.
+  - **Hecho.** `JoinCall` no trae nombre, así que `peer_username` queda en `None`.
+  - Al terminar la llamada (`EndCall`, `RemoteCallEnded`), `peer_username` vuelve a `None`.
+  - *Descartada:* agregar el nombre a `SignalingResponse::CallAccepted`. **Motivo:** obliga a tocar la señalización entre el hilo de autenticación y la UI, y el dato ya está disponible en la app.
+- **Hecho.** El `text_input` muestra el borrador, lo actualiza con `ChatDraftChanged` y envía con Enter mediante `on_submit(AppMessage::ChatSend)`. Al lado hay un botón "Enviar".
+- **Tamaño (ajuste de la prueba manual, sin cambio de requisitos).** El campo de texto era muy chico, así que se agrandó:
+  - el panel pasa de 300 a 360 px de ancho;
+  - el `text_input` ocupa todo el ancho que deja el botón (`Length::Fill`), con padding 10 y texto de 16 px, lo que da unos 40 px de alto;
+  - el botón "Enviar" usa el mismo padding.
+- **Layout del panel (corrección de la prueba manual).** En la captura `docs/chat/evidencia/imagen_texto.png`, el `text_input` y el botón aparecen como una barra de pocos píxeles de alto. El ancho estaba bien (360 px); lo que fallaba era el alto.
+  - **Hecho.** Los videos no tienen tamaño fijo: en iced 0.13, `center_x(Length::Fill)` y `center_y(Length::Fill)` reemplazan el ancho y el alto del `container` por `Fill` (`iced_widget-0.13.4/src/container.rs:147-154`). Por eso la fila de videos y chat recibe solo el alto que le queda en la ventana.
+  - **Hecho.** El layout flex de iced ubica en orden a los hijos que no son `Fill` y descuenta su tamaño del espacio disponible (`iced_core-0.13.2/src/layout/flex.rs:88`, `:117`). El panel pedía un alto fijo: título, más un `scrollable` de `VIDEO_HEIGHT_F32 - 90.0`, más la fila de entrada. Cuando la ventana es baja, la fila de entrada, que es el último hijo, queda casi sin alto.
+  - **Decisión.** La columna del panel toma `height(Length::Fill)` y el `scrollable` del historial toma `Length::Fill`. El título y la fila de entrada (`text_input` con `Length::Fill` y el botón "Enviar" al lado, centrados verticalmente) se ubican primero con su alto propio, y el historial ocupa lo que sobra.
+  - **Ancho.** Queda fijo en 360 px (al menos 300). Los anchos fijos se reparten antes que los `Fill`, así que el chat siempre recibe sus 360 px y los dos videos se reparten el resto.
+  - *Descartada:* `FillPortion` para el panel. **Motivo:** el ancho del chat pasaría a depender del tamaño de la ventana y podría quedar por debajo de 300 px. Con el ancho fijo, el que se achica es el video.
+  - *Descartada:* dar a los videos un tamaño fijo (sacar `center_x(Fill)` y `center_y(Fill)`). **Motivo:** cambia el layout de los videos, que no forma parte del chat.
+  - **Supuesto.** Es el layout esperado según las reglas de iced, pero no se verificó en pantalla. Se confirma en el paso M6 de la prueba manual.
+- **Supuesto.** Las etiquetas, la ubicación y el tamaño del panel se confirman en la prueba manual del Hito 4 (ver Open Questions).
 
 **Fallo al entregar el comando al transporte (3.11).**
 - **Hecho.** Si `sctp_tx.send(SendChat { .. })` falla porque el hilo SCTP TX ya no recibe comandos, `ChatSend` marca el mensaje como "no enviado" con `mark_failed(id)` (`unified_app.rs:575-578`). El mensaje ya se agregó al historial, así que no se pierde en silencio. Es el mismo requisito de reporte de fallo de envío de la spec, con su propio escenario (`chat_3_11`).
@@ -202,4 +220,4 @@ Los escenarios del Hito 2 en `specs/call-chat/spec.md` dependían de dos supuest
 
 ## Open Questions
 
-- El ancho y la ubicación exactos del panel de chat dentro de la vista de la llamada, y sus etiquetas (D6). No cambian los requisitos ni las tareas. Se confirman en el paso M6 de la prueba manual del Hito 4.
+- El ancho y la ubicación exactos del panel de chat dentro de la vista de la llamada (D6). No cambian los requisitos ni las tareas. Tras la primera prueba manual, el panel pasó a 360 px y el campo de texto se agrandó, porque era muy chico. Se vuelve a confirmar en el paso M6 del Hito 4. Las etiquetas ya no son una pregunta abierta: las fija el criterio 3.12 (nombres de usuario).

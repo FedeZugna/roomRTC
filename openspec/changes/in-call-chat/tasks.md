@@ -29,8 +29,16 @@ Para que un test falle por la funcionalidad ausente y no por un error de compila
 - [x] 3.5 Incrementar la generación y reiniciar el chat con `ChatState::reset()` al entrar a `VideoCall` (`unified_app.rs:368`, `:405`, `:476` al cierre del Hito 2), y en `EndCall` y `RemoteCallEnded`. Verificar: pasa `chat_3_7` y `chat_1_11` sigue pasando.
 - [x] 3.6 Agregar el panel de chat a la vista de `VideoCall`: lista con widgets `text` literales, etiqueta "no enviado", `text_input` con `on_submit` y botón Enviar. Verificar: pasan `chat_3_2`, `chat_3_4` y `view_and_subscription_smoke_for_each_screen`.
 - [x] 3.7 Verificar la regresión: pasan `chat_3_9`, `send_file_sends_sctp_command_with_current_path`, `end_call_sends_end_call_clears_frames_and_returns_to_lobby`, `remote_call_ended_clears_frames_and_returns_to_lobby_without_sending_endcall` y `view_and_subscription_smoke_for_each_screen`, sin cambios en esos tests (`git diff` de sus cuerpos vacío).
-- [x] 3.8 Gates del Hito 3 y de la feature: `cargo test chat_` (los 32 tests, de `chat_1_1` a `chat_3_11`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo del chat no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Correr `/opsx:verify` sin CRITICAL. Mostrar la salida real.
+- [x] 3.8 Gates del Hito 3 y de la feature: `cargo test chat_` (los 33 tests, de `chat_1_1` a `chat_3_12`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo del chat no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Correr `/opsx:verify` sin CRITICAL. Mostrar la salida real.
 - [x] 3.9 Criterio 3.11 (agregado después de cerrar 3.8): escribir `chat_3_11` en `src/media/unified_app.rs`, con el receptor de comandos cerrado, y verlo fallar por aserción con el comportamiento desactivado (salida en `docs/chat/evidencia/`). Después restaurar en `ChatSend` el `mark_failed(id)` que se aplica cuando `sctp_tx.send` falla (design D6). Verificar: pasa `chat_3_11` y se vuelven a correr los gates de 3.8, con 32 tests `chat_`.
+- [x] 3.10 Criterio 3.12 (pedido tras la prueba manual):
+  - Agregar a `UnifiedApp` los campos `peer_username` y `pending_callee`, y el método `chat_line(&self, entry)`, que pasa los nombres a la función `chat_line` (design D6). Primero con las etiquetas de siempre.
+  - Escribir `chat_3_12` y verlo fallar por aserción (salida en `docs/chat/evidencia/`).
+  - Después, guardar el callee en `CallUserByClick`, el par al entrar a `VideoCall` (`AcceptCall`, `CallWasAccepted`), y limpiarlo al terminar la llamada y en `CallRejected`.
+  - Agrandar el panel y el `text_input`, como dice D6.
+  - En `chat_3_6` y `chat_3_11` solo cambia la línea que arma `lines`, que pasa a usar el método. Sus aserciones no cambian.
+
+  Verificar: pasa `chat_3_12`, y se vuelven a correr los gates de 3.8 con 33 tests `chat_`.
 
 ## 4. Hito 4 — Integración y prueba manual
 
@@ -42,7 +50,7 @@ Para que un test falle por la funcionalidad ausente y no por un error de compila
   - Lado RX: `route_incoming` con la generación de la app receptora, entregando el chat y la `FileOffer`.
 
   Verificar: pasan `chat_4_1` y `chat_4_2`.
-- [ ] 4.4 Gates automáticos del Hito 4: `cargo test chat_` (los 34 tests, de `chat_1_1` a `chat_4_2`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Mostrar la salida real.
+- [ ] 4.4 Gates automáticos del Hito 4: `cargo test chat_` (los 35 tests, de `chat_1_1` a `chat_4_2`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Mostrar la salida real.
 - [ ] 4.5 Ejecutar la prueba manual M1 a M6 con dos procesos reales (design D8), completando `docs/chat/evidencia/prueba_manual.md`:
   - el resultado de cada paso;
   - el `shasum -a 256` del original y del recibido en M2;

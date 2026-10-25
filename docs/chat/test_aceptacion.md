@@ -80,6 +80,7 @@ notificaciones_pendientes: uno, dos, tres (de bob)
 | 3.9 | Regresión: los tests existentes de `unified_app` (`send_file_sends_sctp_command_with_current_path`, los de `EndCall` y `RemoteCallEnded`, `view_and_subscription_smoke_for_each_screen`) siguen pasando sin cambiar su semántica |
 | 3.10 | Dado `running_call` en falso en la pantalla de videollamada y el borrador `Hola`, cuando el usuario pulsa Enviar, entonces no sale ningún comando y el historial no cambia |
 | 3.11 | Dado que el canal de comandos hacia el transporte ya no acepta mensajes (el hilo SCTP terminó), cuando el usuario envía `Hola`, entonces el historial tiene la entrada propia `Hola` marcada "no enviado", la vista lo muestra y la app no falla |
+| 3.12 | Dada alice logueada, cuando llama a bob y bob acepta, o cuando bob la llama y ella acepta, entonces sus mensajes se muestran como `alice: …` y los de bob como `bob: …`. Al terminar la llamada se olvida el nombre del par, y en una llamada donde no se conoce el par se muestra como `Participante: …` |
 
 ### Hito 4 — Integración y prueba manual
 
@@ -121,7 +122,7 @@ Dos procesos `cliente` y el servidor de señalización locales, con audio y vide
 | M3 | Mensaje apenas empieza la llamada | Llega, o queda marcado "no enviado". Nunca se pierde en silencio |
 | M4 | Corte controlado | Ambos vuelven al lobby y la app no se cuelga (registrar el comportamiento al cerrar) |
 | M5 | Segunda llamada sin reiniciar los clientes | Se registra como **hallazgo** sobre la hipótesis de `exploracion.md` (punto 3), no como fallo del chat |
-| M6 | Etiquetas y ancho del panel | Se confirman `Yo:`, `Participante:` y `(no enviado)`, y que el panel entra junto a los videos |
+| M6 | Etiquetas y tamaño del panel | Cada mensaje lleva el nombre de su autor (`<usuario>: …`), los no enviados llevan `(no enviado)`, y el panel y el campo de texto entran junto a los videos con un tamaño cómodo |
 
 La plantilla también tiene lugar para las limitaciones de la Mac y para la medición de latencia, con sus límites.
 

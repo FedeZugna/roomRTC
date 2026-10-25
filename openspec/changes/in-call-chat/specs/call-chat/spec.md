@@ -76,6 +76,17 @@ El sistema SHALL conservar el texto exacto, incluidos los caracteres no ASCII, a
 - **WHEN** se codifica y se decodifica
 - **THEN** el resultado es igual al original
 
+### Requirement: Autor visible en cada mensaje
+
+Cada mensaje del historial SHALL mostrarse con el nombre de su autor: el nombre del usuario local para los propios, y el del otro participante para los recibidos. Si no se conoce el nombre del participante, SHALL mostrarse `Participante`. Al terminar la llamada, el nombre del participante MUST NOT pasar a la llamada siguiente.
+
+#### Scenario: chat_3_12_muestra_nombres_de_usuario
+- **GIVEN** la usuaria `alice` logueada
+- **WHEN** llama a `bob` y `bob` acepta, o `bob` la llama y ella acepta, y se intercambian mensajes
+- **THEN** sus mensajes se muestran como `alice: <texto>` y los de `bob` como `bob: <texto>`
+- **AND** al terminar la llamada se olvida el nombre de `bob`
+- **AND** en una llamada donde no se conoce el participante, sus mensajes se muestran como `Participante: <texto>`
+
 ### Requirement: El receptor no confía en el emisor
 
 Al recibir, el sistema SHALL descartar sin interrumpir la aplicación todo payload que no sea UTF-8 válido, que esté vacío o que supere el límite configurado. Cada caso SHALL producir un error identificable.

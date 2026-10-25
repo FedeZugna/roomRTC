@@ -42,22 +42,37 @@ El chat se escribe en el stream 2 con `PayloadProtocolIdentifier::String`, y el 
 
 ### D3. `ChatState` como campo de `UnifiedApp`, no de `AppScreen::VideoCall`
 
-`ChatState { history, draft, next_id }` implementa `Default` y vive en `UnifiedApp`. Se reemplaza por `ChatState::default()` al entrar a `VideoCall` y en `EndCall` y `RemoteCallEnded` (1.11, 3.7). La vista y los mensajes del chat solo actúan si la pantalla actual es `VideoCall`.
+`ChatState` (D4) implementa `Default` y vive en `UnifiedApp`. Se reinicia con `ChatState::reset()` al entrar a `VideoCall` y en `EndCall` y `RemoteCallEnded` (1.11, 3.7). La vista y los mensajes del chat solo actúan si la pantalla actual es `VideoCall`.
 - *Descartada:* agregar el campo a `AppScreen::VideoCall`, como decía `exploracion.md` en 5.4. **Motivo:** un campo nuevo en una variante de enum obliga a tocar los 4 literales, y `Default` no lo evita. Esto corrige esa entrada de la exploración.
 
 ### D4. Módulo de dominio `room_rtc::chat` (`src/chat.rs`)
 
-Contiene solo funciones puras, sin `unwrap`, `expect` ni `panic!`:
-- `validate_outgoing(text, max_bytes) -> Result<(), ChatError>`: rechaza lo vacío o de solo espacios (`trim().is_empty()`) y lo que supera `max_bytes` en `text.len()`. No modifica el texto (1.2, 1.3, 1.4).
-- `encode(text) -> Vec<u8>` y `decode(bytes, max_bytes) -> Result<String, ChatError>`: `decode` rechaza el payload vacío, el que supera el límite y el UTF-8 inválido (`String::from_utf8`, sin `lossy`) (1.5, 1.6).
-- `ChatState`:
-  - `push_own(text, history_max) -> u64` devuelve el id local y descarta el mensaje más viejo si se supera el tope.
-  - `push_peer(text, history_max)` agrega un mensaje del participante con la misma regla.
-  - `mark_failed(id)` (1.8, 1.9, 1.10).
-- `ChatError`: `Empty`, `TooLong { len, max }`, `InvalidUtf8`, `NotInCall`.
-- `CHAT_MAX_BYTES = 4096`, `CHAT_HISTORY_MAX = 200` y `CHAT_STREAM_ID = 2`.
+Contiene solo funciones puras, sin `unwrap`, `expect` ni `panic!`. No depende de la red ni de la UI: no conoce `SctpCommand` ni la generación de llamada.
 
-La preparación del envío (1.7) es una función pura que recibe "llamada activa", "canal listo", el texto y los límites. Devuelve el `SendChat` a emitir y actualiza el estado, o devuelve `ChatError` sin tocar nada.
+- **Constantes:** `CHAT_MAX_BYTES = 4096`, `CHAT_HISTORY_MAX = 200` y `CHAT_STREAM_ID = 2`.
+- **`ChatLimits { max_bytes, history_max }`:** agrupa los dos límites. `ChatLimits::PRODUCTION` usa las constantes, y los tests construyen uno con valores chicos (16 bytes, tope 3) (1.3, 1.10, 1.12).
+- **`ChatError`:** `Empty`, `TooLong { len, max }`, `InvalidUtf8`, `NotInCall` y `ChannelNotReady`.
+  - `NotInCall`: no hay una llamada activa.
+  - `ChannelNotReady`: hay llamada pero el canal de envío no está listo.
+  - Son dos variantes para que cada caso de 1.7 tenga un error identificable.
+- **`validate_outgoing(text, max_bytes) -> Result<(), ChatError>`:** rechaza lo vacío o de solo espacios (`trim().is_empty()`) y lo que supera `max_bytes` en `text.len()`. No modifica el texto (1.2, 1.3, 1.4).
+- **`encode(text) -> Vec<u8>` y `decode(bytes, max_bytes) -> Result<String, ChatError>`:** `decode` rechaza el payload vacío, el que supera el límite y el UTF-8 inválido (`String::from_utf8`, sin `lossy`) (1.5, 1.6).
+- **Historial:**
+  - `ChatEntry { author, text, not_sent }` es una entrada del historial.
+  - `ChatAuthor` puede ser `Own { id }` (mensaje propio con su id local) o `Peer` (mensaje del participante, sin id).
+  - `not_sent` solo se activa en mensajes propios.
+- **`ChatState { history: VecDeque<ChatEntry>, draft: String, next_id }`:** implementa `Default`. `history` y `draft` son públicos, `next_id` es privado.
+  - `push_own(text, history_max) -> u64`: asigna el siguiente id local (empieza en 1) y descarta el mensaje más viejo si se supera el tope.
+  - `push_peer(text, history_max)`: agrega un mensaje del participante con la misma regla.
+  - `mark_failed(id) -> bool`: marca `not_sent` solo en la entrada `Own { id }` y devuelve si la encontró (1.8, 1.9, 1.10).
+  - `reset()`: vuelve al estado por defecto, así que vacía el historial y el borrador y reinicia los ids (1.11). Los ids se repiten entre llamadas, pero D2 evita la confusión porque un `ChatSendFailed` de otra llamada se descarta por generación.
+- **`OutgoingChat { id, text }`:** el mensaje a transmitir. `text` es exactamente el texto validado.
+- **`prepare_send(state, text, in_call, channel_ready, limits) -> Result<OutgoingChat, ChatError>`** (1.1, 1.2, 1.4, 1.7):
+  - Comprueba, en este orden, la llamada activa, el canal listo y `validate_outgoing`.
+  - Si todo está bien, agrega el mensaje al historial con `push_own` y devuelve `OutgoingChat`.
+  - Si algo falla, devuelve el `ChatError` sin tocar el estado.
+- **Conversión a `SendChat`:** la hace la app en el Hito 3. Copia `id` y `text` de `OutgoingChat` y agrega la generación actual (D2, D6).
+  - *Descartada:* que `prepare_send` devuelva directamente `SctpCommand::SendChat`. **Motivo:** ataría el modelo a `unified_app` y a la generación, y `SendChat` recién existe desde la tarea 2.2. El modelo del Hito 1 se puede testear sin ninguno de los dos.
 
 ### D5. Funciones de transporte extraídas a la librería (`src/client/transport/sctp_chat.rs`)
 
@@ -75,7 +90,18 @@ Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón 
 
 El panel de chat se muestra junto al video con widgets `text`, que muestran texto literal sin interpretar marcado. Los mensajes propios no enviados llevan la etiqueta "no enviado".
 
-Para los tests del Hito 3 se agrega un helper que también devuelve el emisor de notificaciones. `make_app_with_channels` mantiene su firma, así que los tests existentes no cambian (3.9).
+**De dónde salen las condiciones de `prepare_send` (D4).** Cuando llega `ChatSend`, la app las calcula así:
+- **Llamada activa:** la pantalla actual es `AppScreen::VideoCall`. No se usa `running_call`.
+- **Canal listo:** `sctp_tx` está configurado (`Some`), como condición previa, y además `running_call` vale `true`. Si falta cualquiera de las dos, `prepare_send` devuelve `ChannelNotReady` y no sale ningún `SendChat`.
+
+Hechos sobre `running_call` que justifican el criterio:
+- **Hecho.** Solo la UI lo pone en `false`: en `EndCall` (`src/media/unified_app.rs:457`), en `RemoteCallEnded` (`:474`) y en `SystemClose` (`:528`). `src/bin/cliente.rs` y `src/client/transport/dtls_manager.rs` solo lo leen (por ejemplo el hilo SCTP TX en `cliente.rs:675`).
+- **Hecho.** Lo ponen en `true` el hilo de DTLS, al terminar el handshake y crear el endpoint SCTP (`dtls_manager.rs:221`), y también la UI al entrar a `VideoCall`, antes del handshake: al aceptar (`unified_app.rs:336`), en `CallWasAccepted` (`:373`) y en `JoinCall` (`:441`).
+- **Consecuencia.** `running_call` en `true` **no** garantiza que el handshake terminó ni que haya asociación SCTP. Dentro de `VideoCall` casi siempre vale `true`, así que en la práctica "canal listo" depende sobre todo de `sctp_tx`. Se mantiene igual como condición, porque es la misma señal que usa el hilo TX para descartar comandos (`cliente.rs:675-680`).
+- **Hecho.** Si el hilo TX recibe un comando sin asociación, solo lo registra y lo descarta (`cliente.rs:854`). Para que un mensaje enviado antes del handshake no se pierda en silencio, la tarea 2.6 emite `ChatSendFailed` también en ese caso, y el mensaje queda "no enviado". Es el mismo requisito de reporte de fallo de envío de la spec, con su propio escenario (`chat_2_9`).
+- *Descartada:* una señal nueva de "canal listo" activada en `Event::Connected` (`cliente.rs:531`). **Motivo:** agrega estado compartido y trabajo al Hito 2, y el caso sin asociación ya queda visible como "no enviado".
+
+**Tests.** Para los tests del Hito 3 se agrega un helper que también devuelve el emisor de notificaciones, deja `running_call` en `true` y la pantalla en `VideoCall`. `make_app_with_channels` mantiene su firma, así que los tests existentes no cambian (3.9). `chat_3_10` cubre `running_call` en `false` dentro de `VideoCall`: `ChatSend` no emite `SendChat` y el historial no cambia.
 
 ## Supuestos
 

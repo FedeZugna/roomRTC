@@ -97,6 +97,12 @@ El sistema SHALL rechazar el envío cuando no hay una llamada activa o el canal 
 - **AND** no se genera ningún comando de envío
 - **AND** el historial no cambia
 
+#### Scenario: chat_3_10_no_envia_con_running_call_en_falso
+- **GIVEN** la pantalla de videollamada con `running_call` en falso y el borrador `Hola`
+- **WHEN** el usuario pulsa Enviar
+- **THEN** no sale ningún comando
+- **AND** el historial no cambia
+
 ### Requirement: Reporte de fallo de envío por mensaje
 
 Si el transporte no puede escribir un mensaje propio, el sistema SHALL marcar como "no enviado" solo ese mensaje, identificado por su id local y no por su texto. Los demás mensajes del historial MUST NOT cambiar, y la aplicación SHALL seguir operativa.
@@ -113,6 +119,12 @@ Si el transporte no puede escribir un mensaje propio, el sistema SHALL marcar co
 - **WHEN** A envía `001` con id local 1
 - **THEN** se emite un error de envío asociado al id 1
 - **AND** el cliente sigue operativo
+
+#### Scenario: chat_2_9_envio_sin_asociacion_reporta_fallo
+- **GIVEN** un comando de envío de chat con id local 1 y ninguna asociación SCTP establecida
+- **WHEN** el transporte lo procesa
+- **THEN** se emite un error de envío asociado al id 1
+- **AND** el mensaje no se pierde en silencio
 
 #### Scenario: chat_3_6_muestra_no_enviado
 - **GIVEN** dos mensajes propios en el historial, con ids 1 y 2

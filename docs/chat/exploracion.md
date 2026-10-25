@@ -54,8 +54,11 @@ Responde la sección "Antes de empezar" de [`roomRTC_todo.md`](roomRTC_todo.md).
 | Elemento | Nombre |
 |----------|--------|
 | Módulo | `room_rtc::chat` (`src/chat.rs`) |
-| Error tipado | `ChatError` |
-| Estado en la app | `ChatState { history, draft, next_id }`, con `Default`, como campo de `UnifiedApp`. Se reinicia al empezar y al terminar cada llamada. Un campo en `AppScreen::VideoCall` obligaría a tocar los 4 literales de la variante; ver D3 en `openspec/changes/in-call-chat/design.md` |
+| Error tipado | `ChatError`: `Empty`, `TooLong { len, max }`, `InvalidUtf8`, `NotInCall` (no hay llamada activa) y `ChannelNotReady` (hay llamada pero el canal de envío no está listo) |
+| Límites | `ChatLimits { max_bytes, history_max }`, con `ChatLimits::PRODUCTION` armado con las constantes. Los tests inyectan valores chicos |
+| Entrada del historial | `ChatEntry { author, text, not_sent }`, con `ChatAuthor::Own { id }` (propio, con id local) o `ChatAuthor::Peer` (del participante) |
+| Mensaje saliente | `OutgoingChat { id, text }`, lo que devuelve `prepare_send`. La app lo convierte en `SendChat` en el Hito 3 |
+| Estado en la app | `ChatState { history, draft, next_id }`, con `Default`, como campo de `UnifiedApp`. `ChatState::reset()` lo reinicia al empezar y al terminar cada llamada. Un campo en `AppScreen::VideoCall` obligaría a tocar los 4 literales de la variante; ver D3 en `openspec/changes/in-call-chat/design.md` |
 | Comando | `SctpCommand::SendChat { id, generation, text }` |
 | Notificaciones | `SctpNotification::ChatReceived { generation, text }`, `SctpNotification::ChatSendFailed { id, generation }` |
 | Stream | `CHAT_STREAM_ID: u16 = 2` |

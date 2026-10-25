@@ -54,12 +54,13 @@ mensajes: 001, 002, 003
 | 2.6 | Dada una transferencia del archivo de prueba de A a B en curso, cuando A y B intercambian 20 mensajes de chat, entonces B recibe los 20 de A en orden y el archivo recibido es idéntico byte a byte al original |
 | 2.7 | Dado un fallo inyectado al escribir, cuando A envía `001` (id local 1), entonces se emite un error asociado al id 1 y el cliente sigue operativo |
 | 2.8 | Dados 2 comandos de envío de chat pendientes en cola, cuando termina la llamada y empieza otra, entonces ninguno se transmite en la llamada nueva |
+| 2.9 | Dado un comando de envío de chat (id local 1) y que no hay asociación SCTP, cuando el transporte lo procesa, entonces se emite un error de envío asociado al id 1 y el mensaje no se pierde en silencio |
 
 ### Hito 3 — Integración con la app (iced)
 
 **Background**
 ```yaml
-app: make_app_with_channels(), pantalla VideoCall con force_video()
+app: helper de test que también devuelve el emisor de notificaciones, pantalla VideoCall con force_video() y running_call en true (salvo en 3.10)
 usuario_local: alice
 limites: los de producción (4096 bytes, 200 mensajes). El texto largo del test es "a" repetido 4097 veces
 tick: AppMessage::FrameUpdate, enviado a mano
@@ -77,6 +78,7 @@ notificaciones_pendientes: uno, dos, tres (de bob)
 | 3.7 | Dado un historial con mensajes y un borrador, cuando ocurre `EndCall` (o, en otro caso, `RemoteCallEnded`), entonces la app vuelve al lobby y en la llamada siguiente historial y borrador están vacíos |
 | 3.8 | Dadas 2 notificaciones de chat del par que llegan con la app ya en el lobby (el par mandó un mensaje justo antes de cortar), cuando empieza una llamada nueva y se procesan 2 ticks, entonces no hay panic y ninguna aparece en el historial |
 | 3.9 | Regresión: los tests existentes de `unified_app` (`send_file_sends_sctp_command_with_current_path`, los de `EndCall` y `RemoteCallEnded`, `view_and_subscription_smoke_for_each_screen`) siguen pasando sin cambiar su semántica |
+| 3.10 | Dado `running_call` en falso en la pantalla de videollamada y el borrador `Hola`, cuando el usuario pulsa Enviar, entonces no sale ningún comando y el historial no cambia |
 
 ### Hito 4 — Integración y prueba manual 
 

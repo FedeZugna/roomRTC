@@ -139,6 +139,52 @@ Hechos sobre `running_call` que justifican el criterio:
 
 **Tests.** Para los tests del Hito 3 se agrega un helper que también devuelve el emisor de notificaciones, deja `running_call` en `true` y la pantalla en `VideoCall`. `make_app_with_channels` mantiene su firma, así que los tests existentes no cambian (3.9). `chat_3_10` cubre `running_call` en `false` dentro de `VideoCall`: `ChatSend` no emite `SendChat` y el historial no cambia.
 
+### D7. Hito 4 automático: dos apps unidas por un puente de test, sin hilos
+
+**Qué se puede ejecutar de punta a punta sin hilos.**
+- **Hecho.** Todo el camino del chat, salvo el código de los hilos: `UnifiedApp` A emite `SendChat`, se escribe en una asociación SCTP real (harness en memoria, D5), `route_incoming` lo clasifica en el otro extremo, la notificación entra al receptor de `UnifiedApp` B y un `FrameUpdate` la muestra. Lo mismo vale para el sentido contrario.
+- **Hecho.** Lo que no se puede ejecutar en un test son los bucles de los hilos RX y SCTP TX de `run_media_client` (`src/bin/cliente.rs`). Están dentro de closures del binario y dependen de sockets UDP, DTLS y el pipeline de cámara de GStreamer (`setup_iced_video_client`, `src/client/media/video_pipeline.rs:103`).
+
+**Decisión: puente de test (`ChatBridge`).** Es un helper `#[cfg(test)]` que hace, en un solo hilo, lo que hacen esos bucles, con las mismas funciones de la librería:
+- **Lado TX:** saca los comandos del receptor `SctpCommand` de cada app. Un `SendChat` se escribe con `send_chat` en la asociación del harness, con la generación y el `running_call` de esa app. Un `Err` se entrega como `ChatSendFailed` a la propia app, como el hilo TX (`cliente.rs:765`).
+- **Mensajes de control:** se escriben en el stream 0, como `OFFER <nombre> <tamaño>`, igual que el hilo TX.
+- **Lado RX:** después de `SctpPair::drive()`, toma lo recibido por cada extremo y lo clasifica con `route_incoming`, con la generación de la app receptora. Las notificaciones de `Chat` y la `FileOffer` de un `FileControl::Offer` se entregan al emisor de notificaciones de esa app, como el hilo RX (`cliente.rs:438`, `:476`).
+- **Uso desde los tests:** los tests envían los `FrameUpdate` a mano, igual que en el Hito 3.
+- **Hecho.** La oferta de archivo ya llega a la app por `IncomingFileOffer`, que guarda `pending_file_offer` (`unified_app.rs:652`). Aceptarla emite `SctpCommand::AcceptFile` y limpia la oferta (`:670-684`), así que 4.2 la verifica sin tocar el flujo de archivos.
+
+**Ubicación.**
+- **Archivo:** `src/media/unified_app_e2e_tests.rs`, declarado en `unified_app.rs` como módulo hijo `#[cfg(test)]` con `#[path]`. Así ve los campos privados de `UnifiedApp` (`screen`, `chat`), igual que `mod tests`.
+- **Helpers:** reutiliza los del Hito 3 (`make_app_with_all_channels`, `force_video`), que pasan a `pub(super)` dentro de `mod tests`, sin cambiar su comportamiento.
+- **Dependencias:** usa `SctpPair` del harness, que ya es `pub(crate)`.
+
+**RED de los tests `chat_4_*`.** La funcionalidad del chat ya existe, así que la que falta es el puente. Primero se escribe `ChatBridge` con un `pump` neutro que no mueve nada, y los tests fallan por aserción porque nada llega. Después se implementa `pump`.
+
+**Alternativas.**
+- *Descartada:* lanzar los hilos de `run_media_client` en el test. **Motivo:** requiere sockets UDP, DTLS y la cámara, que la DoD excluye.
+- *Descartada:* extraer los bucles de los hilos a la librería para testearlos tal cual. **Motivo:** es un refactor grande de `cliente.rs`, fuera del alcance del chat. El código que une las funciones dentro de esos bucles queda cubierto por la prueba manual (D8).
+
+### D8. Hito 4 manual: dos procesos reales
+
+**Entorno.** El servidor de señalización (`cargo run --bin server`) y dos `cliente` corren en la misma máquina, desde la raíz del repo, con `src/config/cliente1_mac.config` y `src/config/cliente2_mac.config` en la Mac. El resultado de cada paso (M1 a M6 de `docs/chat/test_aceptacion.md`) se registra en `docs/chat/evidencia/prueba_manual.md`.
+
+**Hechos que condicionan los pasos.**
+- **Hecho.** El archivo recibido se guarda como `received_<nombre>` en el directorio de trabajo del proceso que lo recibe (`cliente.rs:415`). La comparación de M2 se hace con `shasum -a 256` del original y de ese archivo.
+- **Hecho.** El tamaño máximo de mensaje SCTP es 4 MB (`SCTP_MAX_FILE_SIZE`, `src/client/types.rs:46`), así que el archivo de M2 tiene que pesar menos.
+- **Hipótesis.** La segunda llamada sin reiniciar (M5) no vuelve a negociar DTLS ni SCTP (`exploracion.md`, punto 3). Su resultado confirma o refuta esa hipótesis, y no cuenta como fallo del chat (proposal, Fuera de alcance).
+
+**Medición de latencia (M2).** Los logs actuales (`println!`) no llevan marca de tiempo, así que se mide desde afuera:
+- **Método:** grabación de pantalla, contando cuadros entre el Enter y la aparición del mensaje. Si no se puede, cronómetro.
+- **Límites:**
+  - Resolución de ±1 cuadro (unos 17 ms a 60 fps), o la reacción humana (unos 200 ms) con cronómetro.
+  - Los dos procesos comparten máquina y loopback, así que la medición no representa una red real.
+  - Mide la percepción del usuario, no la latencia del transporte.
+- **Interrupción de medios:** se registra cualitativamente (cortes de audio o congelamiento del video), con las mismas limitaciones.
+
+**Limitaciones de la Mac a registrar.**
+- Permiso de cámara para `avfvideosrc`.
+- El cliente puede quedar colgado al cerrar la ventana. Es una limitación reportada, que no se verificó en el código ni tiene causa identificada. M4 registra si ocurre y en qué condiciones.
+- La plantilla tiene una sección para estas y otras limitaciones que aparezcan.
+
 ## Supuestos
 
 Los escenarios del Hito 2 en `specs/call-chat/spec.md` dependían de dos supuestos. Los dos quedaron verificados en el Hito 2:
@@ -148,11 +194,12 @@ Los escenarios del Hito 2 en `specs/call-chat/spec.md` dependían de dos supuest
 ## Risks / Trade-offs
 
 - **[Riesgo, cerrado en el Hito 2] Las asociaciones de sctp-proto en memoria podrían no conectarse sin un transporte real.** → La tarea 2.1 construyó el harness (`sctp_harness.rs`, D5) y ambos extremos se conectan.
-- **[Riesgo] Contención del lock de la asociación entre el hilo TX y el hilo RX durante una transferencia de 4 MB.** → El chat se escribe dentro de la iteración que ya existe (sin locks nuevos), y la escritura de sctp-proto solo encola. En el Hito 4 se mide la latencia percibida en la prueba manual.
+- **[Riesgo] Contención del lock de la asociación entre el hilo TX y el hilo RX durante una transferencia de 4 MB.** → El chat se escribe dentro de la iteración que ya existe (sin locks nuevos), y la escritura de sctp-proto solo encola. En el Hito 4 se mide la latencia percibida en la prueba manual (M2, D8), con los límites de esa medición.
+- **[Riesgo] El puente de test (D7) podría no reflejar lo que hacen los hilos de `cliente.rs`.** → Usa las mismas funciones y el mismo orden (`send_chat`, `route_incoming`, notificación). Lo que el puente no ejercita, que es el código que une todo dentro de los hilos, lo cubre la prueba manual (D8).
 - **[Trade-off] "No enviado" solo cubre los errores de `write_sctp`.** Un mensaje encolado que nunca llega no se detecta, porque el MVP no tiene confirmación de entrega (fuera de alcance).
 - **[Trade-off] El contador de generación agrega un `Arc<AtomicU64>` a `UnifiedAppConfig`, no a `MediaClientConfig` (D2).** → Es un cambio aditivo. Solo lo construyen `run_media_client` (`cliente.rs:92`, `:1089`), `run_unified_app` y el helper de tests `make_app_with_channels`.
 - **[Riesgo] Mover el parseo del stream 0 a `parse_file_control` podría cambiar el comportamiento de archivos.** → 2.3 y los tests existentes cubren la regresión, y la función copia la lógica previa. Se verificó además que el cuerpo del stream 1 en el hilo RX quedó idéntico, salvo espacios. Único cambio observable: un mensaje de control que no se reconoce ahora se registra como `Mensaje en stream 0: …` en vez de `Control message: …` (solo el log).
 
 ## Open Questions
 
-- El ancho y la ubicación exactos del panel de chat dentro de la vista de la llamada. No cambian los requisitos ni las tareas, y se ajustan en la prueba manual del Hito 4.
+- El ancho y la ubicación exactos del panel de chat dentro de la vista de la llamada, y sus etiquetas (D6). No cambian los requisitos ni las tareas. Se confirman en el paso M6 de la prueba manual del Hito 4.

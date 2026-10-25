@@ -32,7 +32,32 @@ Para que un test falle por la funcionalidad ausente y no por un error de compila
 - [x] 3.8 Gates del Hito 3 y de la feature: `cargo test chat_` (los 32 tests, de `chat_1_1` a `chat_3_11`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo del chat no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Correr `/opsx:verify` sin CRITICAL. Mostrar la salida real.
 - [x] 3.9 Criterio 3.11 (agregado después de cerrar 3.8): escribir `chat_3_11` en `src/media/unified_app.rs`, con el receptor de comandos cerrado, y verlo fallar por aserción con el comportamiento desactivado (salida en `docs/chat/evidencia/`). Después restaurar en `ChatSend` el `mark_failed(id)` que se aplica cuando `sctp_tx.send` falla (design D6). Verificar: pasa `chat_3_11` y se vuelven a correr los gates de 3.8, con 32 tests `chat_`.
 
+## 4. Hito 4 — Integración y prueba manual
+
+- [ ] 4.1 Crear `src/media/unified_app_e2e_tests.rs`, declarado en `unified_app.rs` como módulo hijo `#[cfg(test)]` con `#[path]` (design D7). Pasar a `pub(super)` los helpers `make_app_with_all_channels` y `force_video` de `mod tests`, sin cambiar su comportamiento. Escribir el `ChatBridge` de test sobre `SctpPair` con un `pump` neutro, que no mueve nada. Verificar: `cargo test` compila, los tests existentes pasan y los cuerpos de los tests existentes no cambian.
+- [ ] 4.2 Escribir los tests `chat_4_1` y `chat_4_2` (`docs/chat/test_aceptacion.md`, Hito 4) usando `ChatBridge`, el helper del Hito 3 y ticks de `FrameUpdate` enviados a mano. Verificar: compilan y fallan por aserción porque el puente todavía no mueve nada. Guardar la salida en `docs/chat/evidencia/`.
+- [ ] 4.3 Implementar `ChatBridge::pump` como en design D7:
+  - Lado TX: `SendChat` con `send_chat`, con la generación y el `running_call` de cada app, y un `Err` entregado como `ChatSendFailed` a la propia app.
+  - Mensajes de control en el stream 0.
+  - Lado RX: `route_incoming` con la generación de la app receptora, entregando el chat y la `FileOffer`.
+
+  Verificar: pasan `chat_4_1` y `chat_4_2`.
+- [ ] 4.4 Gates automáticos del Hito 4: `cargo test chat_` (los 34 tests, de `chat_1_1` a `chat_4_2`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Mostrar la salida real.
+- [ ] 4.5 Ejecutar la prueba manual M1 a M6 con dos procesos reales (design D8), completando `docs/chat/evidencia/prueba_manual.md`:
+  - el resultado de cada paso;
+  - el `shasum -a 256` del original y del recibido en M2;
+  - la medición de latencia, con método y límites;
+  - las limitaciones de la Mac;
+  - el hallazgo de M5.
+
+  Verificar: ningún paso de la plantilla queda sin resultado ("pasó", "falló" o "no se pudo ejecutar", con el motivo).
+- [ ] 4.6 Verificación final del Hito 4:
+  - Registrar el hallazgo de M5 en `docs/chat/exploracion.md` (punto 3) como hecho o hipótesis refutada.
+  - Si M6 cambia las etiquetas o el ancho del panel, actualizar primero design D6 y la spec, y después el código y los tests.
+  - Si algún paso de M1 a M4 falla por el chat, abrir la corrección con su criterio y su test antes de seguir.
+
+  Verificar: `/opsx:verify` sin CRITICAL y `openspec validate in-call-chat --strict` en verde.
+
 ## Workflow follow-up
 
-- Especificar el Hito 4 (integración entre dos `UnifiedApp`, chat con el modal de oferta visible y prueba manual con dos procesos reales) al cerrar el Hito 3, actualizando esta spec. La prueba manual reinicia ambos clientes entre llamadas (`docs/chat/exploracion.md`, 5.6).
 - Archivar el change con `/opsx:archive` cuando se cumplan todos los gates y quede registrada la prueba manual.

@@ -169,6 +169,13 @@ El sistema SHALL entregar al participante cada mensaje exactamente una vez, en e
 - **WHEN** la app procesa 3 ticks
 - **THEN** el historial muestra `uno`, `dos` y `tres`, una vez cada uno y en ese orden
 
+#### Scenario: chat_4_1_dos_apps_intercambian_en_ambos_sentidos
+- **GIVEN** dos instancias de la app, A y B, en una llamada activa conectadas por el transporte
+- **WHEN** A envía `a1`, `a2` y `a3`, y B envía `b1` y `b2`, intercalados
+- **THEN** B muestra del participante `a1`, `a2` y `a3`, en ese orden y una vez cada uno
+- **AND** A muestra del participante `b1` y `b2`, en ese orden y una vez cada uno
+- **AND** ningún mensaje propio queda "no enviado"
+
 ### Requirement: Tope del historial
 
 Cuando un mensaje nuevo haría superar el tope configurado, el sistema SHALL descartar el mensaje más viejo del historial.
@@ -236,3 +243,11 @@ El chat SHALL viajar por un canal propio, separado del control y del contenido d
 - **WHEN** se ejecutan los tests existentes de `unified_app` (`send_file_sends_sctp_command_with_current_path`, los de `EndCall` y `RemoteCallEnded`, `view_and_subscription_smoke_for_each_screen`)
 - **THEN** pasan sin cambiar su semántica
 - **AND** con un historial de chat no vacío, enviar un archivo sigue generando el mismo comando de envío de archivo con la ruta actual
+
+#### Scenario: chat_4_2_chat_con_oferta_de_archivo_pendiente
+- **GIVEN** dos instancias de la app, A y B, en una llamada activa conectadas por el transporte
+- **AND** A le ofreció a B el archivo `foto.png` de 100 bytes y B muestra la oferta pendiente
+- **WHEN** A y B intercambian mensajes de chat
+- **THEN** los mensajes llegan en ambos sentidos
+- **AND** la oferta pendiente de B sigue siendo `foto.png` de 100 bytes y la vista de B se construye sin fallar
+- **AND** al aceptar la oferta, B emite la misma aceptación de archivo que sin chat

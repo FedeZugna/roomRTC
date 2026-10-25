@@ -81,15 +81,53 @@ notificaciones_pendientes: uno, dos, tres (de bob)
 | 3.10 | Dado `running_call` en falso en la pantalla de videollamada y el borrador `Hola`, cuando el usuario pulsa Enviar, entonces no sale ningún comando y el historial no cambia |
 | 3.11 | Dado que el canal de comandos hacia el transporte ya no acepta mensajes (el hilo SCTP terminó), cuando el usuario envía `Hola`, entonces el historial tiene la entrada propia `Hola` marcada "no enviado", la vista lo muestra y la app no falla |
 
-### Hito 4 — Integración y prueba manual 
+### Hito 4 — Integración y prueba manual
 
-- Dos `UnifiedApp` intercambian mensajes en ambos sentidos, orden por emisor, archivo de 64 KiB más 20 mensajes cruzados con el archivo idéntico, y limpieza al cortar.
-- Chat con una oferta de archivo pendiente (modal visible): el chat funciona y la oferta no cambia.
-- Prueba manual con dos procesos reales (servidor de señalización local, dos `cliente`, audio y video activos): saludo en ambos sentidos, chat durante una transferencia de archivo sin interrupción observable de medios (consignando las limitaciones de la medición), desconexión controlada del par, el chat funciona en la primera llamada tras reiniciar.
+El Hito 4 tiene dos partes:
+- **Automática:** tests `chat_4_*`, sin red real ni cámara.
+- **Manual:** con dos procesos reales. El resultado de cada paso se registra en [`evidencia/prueba_manual.md`](evidencia/prueba_manual.md).
 
+**Background (parte automática)**
+```yaml
+apps: A (alice) y B (bob), dos UnifiedApp en VideoCall con running_call en true (helper del Hito 3)
+transporte: asociaciones sctp-proto conectadas en memoria (harness del Hito 2), sin sockets ni DTLS
+puente: un helper de test hace lo que hacen los hilos SCTP TX y RX de cliente.rs, con las mismas funciones
+  (send_chat, route_incoming). Lleva los comandos de cada app a la asociación y lo recibido al receptor
+  de notificaciones de la otra app
+tick: AppMessage::FrameUpdate, enviado a mano
+limites: los de producción
+```
+
+| #   | Given / When / Then |
+|-----|---------------------|
+| 4.1 | Dadas A y B en llamada, cuando A envía `a1`, `a2`, `a3` y B envía `b1`, `b2` intercalados, y se procesan el puente y los ticks, entonces el historial de B tiene del par `a1`, `a2`, `a3` en ese orden, el de A tiene del par `b1`, `b2` en ese orden, cada mensaje aparece una sola vez y ningún mensaje propio queda "no enviado" |
+| 4.2 | Dado que A le ofrece a B el archivo `foto.png` de 100 bytes por el stream de control y B muestra el modal de oferta, cuando A y B intercambian mensajes de chat, entonces los mensajes llegan en ambos sentidos, la oferta pendiente de B sigue siendo `foto.png` de 100 bytes, la vista de B se construye sin fallar y, al aceptar, B emite el mismo comando de aceptación de siempre |
+
+Lo que esta parte no cubre se prueba en la parte manual: el código que une las funciones dentro de los hilos de `cliente.rs`, DTLS y los medios.
+
+Los puntos del Hito 4 de la versión anterior de esta tabla quedan cubiertos así:
+- "Archivo de 64 KiB más 20 mensajes cruzados": cubierto por 2.6.
+- "Limpieza al cortar": cubierto por 3.7 y 3.8.
+- "Llamada nueva sin mensajes viejos": no es un paso manual, porque la prueba reinicia los clientes entre llamadas. La segunda llamada sin reiniciar se registra como hallazgo (M5).
+
+**Parte manual (checklist)**
+
+Dos procesos `cliente` y el servidor de señalización locales, con audio y video activos. Ver la plantilla para los pasos detallados y el registro.
+
+| #  | Paso | Resultado esperado |
+|----|------|--------------------|
+| M1 | Saludo en ambos sentidos | Cada mensaje aparece una vez del otro lado, en orden |
+| M2 | Chat durante la transferencia de un archivo | Los mensajes llegan en orden, y el `shasum` del original y del recibido coincide |
+| M3 | Mensaje apenas empieza la llamada | Llega, o queda marcado "no enviado". Nunca se pierde en silencio |
+| M4 | Corte controlado | Ambos vuelven al lobby y la app no se cuelga (registrar el comportamiento al cerrar) |
+| M5 | Segunda llamada sin reiniciar los clientes | Se registra como **hallazgo** sobre la hipótesis de `exploracion.md` (punto 3), no como fallo del chat |
+| M6 | Etiquetas y ancho del panel | Se confirman `Yo:`, `Participante:` y `(no enviado)`, y que el panel entra junto a los videos |
+
+La plantilla también tiene lugar para las limitaciones de la Mac y para la medición de latencia, con sus límites.
 
 ### Criterios globales (Definition of Done de la feature)
-- [ ] Todos los tests de los Hitos 1 a 3 pasan, cada uno con su nombre `chat_<N>_<M>_...`.
+- [ ] Todos los tests de los Hitos 1 a 4 pasan, cada uno con su nombre `chat_<N>_<M>_...`.
+- [ ] La prueba manual del Hito 4 está registrada en `docs/chat/evidencia/prueba_manual.md`.
 - [ ] Ningún test existente se rompe. Resultado igual o mejor que la línea base.
 - [ ] Ningún test del chat depende de red real, cámara ni archivos de configuración.
 - [ ] Sin cambios en `src/bin/server.rs` ni en el enum `Message` de señalización.

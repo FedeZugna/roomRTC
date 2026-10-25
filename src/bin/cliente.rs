@@ -1,3 +1,7 @@
+use room_rtc::chat::CHAT_MAX_BYTES;
+use room_rtc::client::transport::sctp_chat::{
+    ChatSendOutcome, FileControl, Incoming, notify_without_association, route_incoming, send_chat,
+};
 use room_rtc::client::types::SCTP_MAX_FILE_SIZE;
 use room_rtc::client::{
     ClientResult, ClienteICELite, MediaClientConfig, Message, SCTP_MAX_USERS, SharedDtlsStream,
@@ -21,7 +25,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use openssl::asn1::Asn1Time;
 use openssl::hash::MessageDigest;
@@ -84,6 +88,8 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
     let rtp_stats = Arc::new(Mutex::new(RtpRecvStats::default()));
     let quality_state = Arc::new(Mutex::new(0.0));
     let running_call = Arc::new(AtomicBool::new(false));
+    // Generación de la llamada actual: la incrementa la UI al entrar a una llamada
+    let call_generation = Arc::new(AtomicU64::new(0));
     let shutdown = Arc::new(AtomicBool::new(false));
 
     // El Stream DTLS compartido protegido por Mutex
@@ -212,6 +218,7 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
     let jitter_for_cons = Arc::clone(&jitter_buf);
 
     let sctp_notif_tx_for_rx = sctp_notif_tx.clone();
+    let rx_call_generation = Arc::clone(&call_generation);
     let pending_files_rx = Arc::clone(&pending_files);
     let files_to_send_rx = Arc::clone(&files_to_send);
     let rx_thread = thread::spawn(move || {
@@ -364,166 +371,117 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
                                                                             id, d
                                                                         );
 
-                                                                        if id == 1 {
-                                                                            // Stream 1: Archivos
-                                                                            // Si el buffer está vacío, esperamos cabecera [Len(2)][Name][Content]
-                                                                            if file_buffer
-                                                                                .is_empty()
-                                                                            {
-                                                                                println!(
-                                                                                    "[SCTP RX] Inicio de transferencia de archivo: {} bytes. Esperando cabecera...\n",
-                                                                                    data.len()
-                                                                                );
-                                                                                if data.len() > 2 {
-                                                                                    let name_len = u16::from_be_bytes([data[0], data[1]]) as usize;
-                                                                                    if data.len() >= 2 + name_len {
-                                                                                        let name_bytes = &data[2..2+name_len];
-                                                                                        let content = &data[2+name_len..];
-                                                                                        let filename = String::from_utf8_lossy(name_bytes).to_string();
-                                                                                        current_file_name = filename.clone();
-                                                                                        current_file_size = *file_offers.get(&filename).unwrap_or(&0);
-                                                                                        file_buffer.extend_from_slice(content);
+                                                                        match route_incoming(
+                                                                            id,
+                                                                            data,
+                                                                            rx_call_generation.load(Ordering::SeqCst),
+                                                                            CHAT_MAX_BYTES,
+                                                                    ) {
+                                                                        Incoming::FileContent(data) => {
+                                                                                // Stream 1: Archivos
+                                                                                // Si el buffer está vacío, esperamos cabecera [Len(2)][Name][Content]
+                                                                                if file_buffer
+                                                                                    .is_empty()
+                                                                                {
+                                                                                    println!(
+                                                                                        "[SCTP RX] Inicio de transferencia de archivo: {} bytes. Esperando cabecera...\n",
+                                                                                        data.len()
+                                                                                    );
+                                                                                    if data.len() > 2 {
+                                                                                        let name_len = u16::from_be_bytes([data[0], data[1]]) as usize;
+                                                                                        if data.len() >= 2 + name_len {
+                                                                                            let name_bytes = &data[2..2+name_len];
+                                                                                            let content = &data[2+name_len..];
+                                                                                            let filename = String::from_utf8_lossy(name_bytes).to_string();
+                                                                                            current_file_name = filename.clone();
+                                                                                            current_file_size = *file_offers.get(&filename).unwrap_or(&0);
+                                                                                            file_buffer.extend_from_slice(content);
+                                                                                        }
                                                                                     }
-                                                                                }
-                                                                            } else {
-                                                                                // Continuación de archivo (chunks sin cabecera)
-                                                                                file_buffer.extend_from_slice(data);
-                                                                            }
-
-                                                                            println!(
-                                                                                "[SCTP RX] Buffer progress: {} / {} bytes for file '{}'",
-                                                                                file_buffer.len(),
-                                                                                current_file_size,
-                                                                                current_file_name
-                                                                            );
-
-                                                                            // Verificar si se completó la descarga
-                                                                            if !current_file_name.is_empty() && file_buffer.len() >= current_file_size {
-                                                                                let save_name = format!("received_{}", current_file_name);
-                                                                                if std::fs::write(&save_name, &file_buffer).is_ok() {
-                                                                                    println!("[SCTP RX] Archivo guardado: {} ({} bytes)", save_name, file_buffer.len());
-                                                                                    let _ = sctp_notif_tx_for_rx.send(
-                                                                                        room_rtc::media::unified_app::SctpNotification::FileTransferComplete {
-                                                                                            filename: current_file_name.clone(),
-                                                                                        }
-                                                                                    );
                                                                                 } else {
-                                                                                    eprintln!("[SCTP RX] Error guardando archivo");
-                                                                                    let _ = sctp_notif_tx_for_rx.send(
-                                                                                        room_rtc::media::unified_app::SctpNotification::FileTransferFailed {
-                                                                                            filename: current_file_name.clone(),
-                                                                                            error: "Failed to save file".to_string(),
-                                                                                        }
-                                                                                    );
+                                                                                    // Continuación de archivo (chunks sin cabecera)
+                                                                                    file_buffer.extend_from_slice(data);
                                                                                 }
-                                                                                // Resetear estado
-                                                                                file_buffer.clear();
-                                                                                current_file_name.clear();
-                                                                                current_file_size = 0;
-                                                                            }
-                                                                        } else if id == 0 {
-                                                                            // Stream 0: Mensajes de control
-                                                                            let msg = String::from_utf8_lossy(data);
-                                                                            println!(
-                                                                                "[SCTP RX] Control message: {}",
-                                                                                msg
-                                                                            );
 
-                                                                            // Parsear mensaje de control
-                                                                            if let Some(rest) = msg
-                                                                                .strip_prefix(
-                                                                                    "OFFER ",
-                                                                                )
-                                                                            {
-                                                                                // Formato: OFFER <filename> <size>
-                                                                                // Usamos rsplit_once para separar el tamaño del final, permitiendo espacios en el nombre
-                                                                                if let Some((filename_part, size_part)) = rest.rsplit_once(' ') && let Ok(size) = size_part.parse::<usize>() {
-                                                                                        let filename = filename_part.to_string();
-                                                                                        println!("[SCTP RX] File offer received: {} ({} bytes)", filename, size);
-                                                                                        file_offers.insert(filename.clone(), size);
+                                                                                println!(
+                                                                                    "[SCTP RX] Buffer progress: {} / {} bytes for file '{}'",
+                                                                                    file_buffer.len(),
+                                                                                    current_file_size,
+                                                                                    current_file_name
+                                                                                );
+
+                                                                                // Verificar si se completó la descarga
+                                                                                if !current_file_name.is_empty() && file_buffer.len() >= current_file_size {
+                                                                                    let save_name = format!("received_{}", current_file_name);
+                                                                                    if std::fs::write(&save_name, &file_buffer).is_ok() {
+                                                                                        println!("[SCTP RX] Archivo guardado: {} ({} bytes)", save_name, file_buffer.len());
                                                                                         let _ = sctp_notif_tx_for_rx.send(
-                                                                                            room_rtc::media::unified_app::SctpNotification::FileOffer {
-                                                                                                filename,
-                                                                                                size,
+                                                                                            room_rtc::media::unified_app::SctpNotification::FileTransferComplete {
+                                                                                                filename: current_file_name.clone(),
                                                                                             }
                                                                                         );
-                                                                                }
-                                                                            } else if let Some(
-                                                                                filename_part,
-                                                                            ) = msg
-                                                                                .strip_prefix(
-                                                                                    "ACCEPT ",
-                                                                                )
-                                                                            {
-                                                                                let filename =
-                                                                                    filename_part
-                                                                                        .to_string(
-                                                                                        );
-                                                                                println!(
-                                                                                    "[SCTP RX] File acceptance received for: {}",
-                                                                                    filename
-                                                                                );
-
-                                                                                // Buscar el archivo pendiente y agregarlo a la cola de envío
-                                                                                if let Ok(
-                                                                                    mut pending,
-                                                                                ) =
-                                                                                    pending_files_rx
-                                                                                        .lock()
-                                                                                {
-                                                                                    if let Some(
-                                                                                        path,
-                                                                                    ) = pending
-                                                                                        .remove(
-                                                                                        &filename,
-                                                                                    ) {
-                                                                                        println!(
-                                                                                            "[SCTP RX] Queuing file for transmission: {}",
-                                                                                            path
-                                                                                        );
-                                                                                        // Agregar a la cola que el TX thread procesará
-                                                                                        if let Ok(mut queue) = files_to_send_rx.lock() {
-                                                                                            queue.push((filename, path));
-                                                                                        }
                                                                                     } else {
-                                                                                        println!("[SCTP RX] No pending file found for: {}", filename);
-                                                                                    }
-                                                                                }
-                                                                            } else if let Some(
-                                                                                filename_part,
-                                                                            ) = msg
-                                                                                .strip_prefix(
-                                                                                    "REJECT ",
-                                                                                )
-                                                                            {
-                                                                                let filename =
-                                                                                    filename_part
-                                                                                        .to_string(
+                                                                                        eprintln!("[SCTP RX] Error guardando archivo");
+                                                                                        let _ = sctp_notif_tx_for_rx.send(
+                                                                                            room_rtc::media::unified_app::SctpNotification::FileTransferFailed {
+                                                                                                filename: current_file_name.clone(),
+                                                                                                error: "Failed to save file".to_string(),
+                                                                                            }
                                                                                         );
-                                                                                println!(
-                                                                                    "[SCTP RX] File rejected: {}",
-                                                                                    filename
-                                                                                );
-
-                                                                                // Remover archivo pendiente
-                                                                                if let Ok(
-                                                                                    mut pending,
-                                                                                ) =
-                                                                                    pending_files_rx
-                                                                                        .lock()
-                                                                                {
-                                                                                    pending.remove(
-                                                                                        &filename,
+                                                                                    }
+                                                                                    // Resetear estado
+                                                                                    file_buffer.clear();
+                                                                                    current_file_name.clear();
+                                                                                    current_file_size = 0;
+                                                                                }
+                                                                        }
+                                                                        Incoming::FileControl(control) => {
+                                                                            // Stream 0: Mensajes de control de archivos
+                                                                            println!("[SCTP RX] Control message: {:?}", control);
+                                                                            match control {
+                                                                                FileControl::Offer { filename, size } => {
+                                                                                    println!("[SCTP RX] File offer received: {} ({} bytes)", filename, size);
+                                                                                    file_offers.insert(filename.clone(), size);
+                                                                                    let _ = sctp_notif_tx_for_rx.send(
+                                                                                        room_rtc::media::unified_app::SctpNotification::FileOffer {
+                                                                                            filename,
+                                                                                            size,
+                                                                                        },
                                                                                     );
                                                                                 }
+                                                                                FileControl::Accept { filename } => {
+                                                                                    println!("[SCTP RX] File acceptance received for: {}", filename);
+                                                                                    // Buscar el archivo pendiente y agregarlo a la cola de envío
+                                                                                    if let Ok(mut pending) = pending_files_rx.lock() {
+                                                                                        if let Some(path) = pending.remove(&filename) {
+                                                                                            println!("[SCTP RX] Queuing file for transmission: {}", path);
+                                                                                            // Agregar a la cola que el TX thread procesará
+                                                                                            if let Ok(mut queue) = files_to_send_rx.lock() {
+                                                                                                queue.push((filename, path));
+                                                                                            }
+                                                                                        } else {
+                                                                                            println!("[SCTP RX] No pending file found for: {}", filename);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                                FileControl::Reject { filename } => {
+                                                                                    println!("[SCTP RX] File rejected: {}", filename);
+                                                                                    // Remover archivo pendiente
+                                                                                    if let Ok(mut pending) = pending_files_rx.lock() {
+                                                                                        pending.remove(&filename);
+                                                                                    }
+                                                                                }
                                                                             }
-                                                                        } else {
-                                                                            // Otros streams: Log
-                                                                            println!(
-                                                                                "[SCTP RX] Mensaje en stream {}: {:?}",
-                                                                                id, d
-                                                                            );
                                                                         }
+                                                                        Incoming::Chat(notif) => {
+                                                                            // Stream de chat: la UI descarta lo que no es de la llamada actual
+                                                                            let _ = sctp_notif_tx_for_rx.send(notif);
+                                                                        }
+                                                                        Incoming::Ignored => {
+                                                                            // Otros streams, control desconocido o chat inválido: Log
+                                                                            println!("[SCTP RX] Mensaje en stream {}: {:?}", id, d);
+                                                                        }
+                                                                    }
                                                                     }
                                                                 }
                                                             }
@@ -656,6 +614,8 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
     let sctp_tx_shutdown = Arc::clone(&shutdown);
     let pending_files_tx = Arc::clone(&pending_files);
     let files_to_send_tx = Arc::clone(&files_to_send);
+    let sctp_notif_tx_for_tx = sctp_notif_tx.clone();
+    let tx_call_generation = Arc::clone(&call_generation);
 
     thread::spawn(move || {
         use room_rtc::media::unified_app::SctpCommand;
@@ -777,6 +737,35 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
                                 }
                             }
                         }
+                        SctpCommand::SendChat {
+                            id,
+                            generation,
+                            text,
+                        } => {
+                            // Enviar chat por su stream dedicado
+                            match send_chat(
+                                assoc,
+                                id,
+                                generation,
+                                &text,
+                                tx_call_generation.load(Ordering::SeqCst),
+                                sctp_tx_running.load(Ordering::Relaxed),
+                            ) {
+                                Ok(ChatSendOutcome::Sent) => {
+                                    println!("[SCTP TX] Chat enviado (id {})", id);
+                                }
+                                Ok(ChatSendOutcome::Discarded) => {
+                                    println!(
+                                        "[SCTP TX] Chat de otra llamada descartado (id {})",
+                                        id
+                                    );
+                                }
+                                Err(e) => {
+                                    eprintln!("[SCTP TX] Error enviando chat: {}", e.reason);
+                                    let _ = sctp_notif_tx_for_tx.send(e.to_notification());
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -850,8 +839,12 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
                         }
                     }
                 }
-            } else if cmd_opt.is_some() {
+            } else if let Some(cmd) = cmd_opt {
                 eprintln!("[SCTP TX] Error: No hay asociación SCTP activa.");
+                // Un chat sin asociación se reporta para que no se pierda en silencio
+                if let Some(notif) = notify_without_association(&cmd) {
+                    let _ = sctp_notif_tx_for_tx.send(notif);
+                }
             }
         }
     });
@@ -1093,6 +1086,7 @@ fn run_media_client(cliente: &ClienteICELite, config: MediaClientConfig) -> Clie
             width,
             height,
             running_call: Arc::clone(&running_call),
+            call_generation: Arc::clone(&call_generation),
             shutdown: Arc::clone(&shutdown),
             audio_muted_signal: Arc::clone(&audio_muted),
         },

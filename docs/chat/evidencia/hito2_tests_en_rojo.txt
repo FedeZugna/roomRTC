@@ -1,0 +1,98 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.06s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 9 tests
+test client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat ... FAILED
+test client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo ... FAILED
+test client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat ... FAILED
+test client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada ... FAILED
+test client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id ... FAILED
+test client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga ... FAILED
+test client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta ... FAILED
+test client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje ... FAILED
+test client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo ... FAILED
+
+failures:
+
+---- client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat' (698757) panicked at src/client/transport/sctp_chat.rs:218:9:
+assertion `left == right` failed
+  left: Ignored
+ right: FileContent([72, 111, 108, 97, 44, 32, 101, 115, 116, 111, 32, 112, 97, 114, 101, 99, 101, 32, 117, 110, 32, 99, 104, 97, 116])
+
+---- client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo' (698762) panicked at src/client/transport/sctp_chat.rs:321:9:
+assertion `left == right` failed
+  left: None
+ right: Some(ChatSendFailed { id: 1, generation: 1 })
+
+---- client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat' (698756) panicked at src/client/transport/sctp_chat.rs:203:9:
+assertion `left == right` failed
+  left: Ignored
+ right: FileControl(Offer { filename: "foto.png", size: 100 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada' (698761) panicked at src/client/transport/sctp_chat.rs:305:13:
+assertion `left == right` failed
+  left: Ok(Sent)
+ right: Ok(Discarded)
+
+---- client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id' (698760) panicked at src/client/transport/sctp_chat.rs:282:9:
+assertion `left == right` failed
+  left: Ok(Sent)
+ right: Err(ChatSendFailed { id: 1, generation: 1 })
+
+---- client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga' (698755) panicked at src/client/transport/sctp_chat.rs:192:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatReceived { generation: 1, text: "001" }, ChatReceived { generation: 1, text: "002" }, ChatReceived { generation: 1, text: "003" }]
+
+---- client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta' (698758) panicked at src/client/transport/sctp_chat.rs:228:9:
+assertion `left == right` failed
+  left: []
+ right: [Chat(ChatReceived { generation: 1, text: "OFFER foto.png 100" })]
+
+---- client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje' (698754) panicked at src/client/transport/sctp_chat.rs:179:9:
+assertion `left == right` failed
+  left: []
+ right: [Chat(ChatReceived { generation: 1, text: "001" })]
+
+---- client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo stdout ----
+
+thread 'client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo' (698759) panicked at src/client/transport/sctp_chat.rs:266:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatReceived { generation: 1, text: "a00" }, ChatReceived { generation: 1, text: "a01" }, ChatReceived { generation: 1, text: "a02" }, ChatReceived { generation: 1, text: "a03" }, ChatReceived { generation: 1, text: "a04" }, ChatReceived { generation: 1, text: "a05" }, ChatReceived { generation: 1, text: "a06" }, ChatReceived { generation: 1, text: "a07" }, ChatReceived { generation: 1, text: "a08" }, ChatReceived { generation: 1, text: "a09" }, ChatReceived { generation: 1, text: "a10" }, ChatReceived { generation: 1, text: "a11" }, ChatReceived { generation: 1, text: "a12" }, ChatReceived { generation: 1, text: "a13" }, ChatReceived { generation: 1, text: "a14" }, ChatReceived { generation: 1, text: "a15" }, ChatReceived { generation: 1, text: "a16" }, ChatReceived { generation: 1, text: "a17" }, ChatReceived { generation: 1, text: "a18" }, ChatReceived { generation: 1, text: "a19" }]
+
+
+failures:
+    client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje
+    client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga
+    client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat
+    client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat
+    client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta
+    client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo
+    client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id
+    client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada
+    client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo
+
+test result: FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 110 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

@@ -6,7 +6,7 @@ use super::login_viewer::{LoginAction, LoginMessage, LoginState};
 use super::register_viewer::{RegisterAction, RegisterMessage, RegisterState};
 use iced::widget::{Image, button, column, container, row, text};
 use iced::{Element, Font, Length, Subscription, Task, Theme, window};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -34,18 +34,48 @@ pub enum SignalingCommand {
     EndCall,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SctpCommand {
-    SendFile { path: String },
-    AcceptFile { filename: String },
-    RejectFile { filename: String },
+    SendFile {
+        path: String,
+    },
+    AcceptFile {
+        filename: String,
+    },
+    RejectFile {
+        filename: String,
+    },
+    /// Mensaje de chat propio (id local) de la llamada `generation`.
+    SendChat {
+        id: u64,
+        generation: u64,
+        text: String,
+    },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SctpNotification {
-    FileOffer { filename: String, size: usize },
-    FileTransferComplete { filename: String },
-    FileTransferFailed { filename: String, error: String },
+    FileOffer {
+        filename: String,
+        size: usize,
+    },
+    FileTransferComplete {
+        filename: String,
+    },
+    FileTransferFailed {
+        filename: String,
+        error: String,
+    },
+    /// Mensaje de chat recibido durante la llamada `generation`.
+    ChatReceived {
+        generation: u64,
+        text: String,
+    },
+    /// El transporte no pudo escribir el mensaje propio `id`.
+    ChatSendFailed {
+        id: u64,
+        generation: u64,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -161,6 +191,8 @@ pub struct UnifiedAppConfig {
     pub width: u32,
     pub height: u32,
     pub running_call: Arc<AtomicBool>,
+    /// Generación de la llamada actual, compartida con los hilos de red.
+    pub call_generation: Arc<AtomicU64>,
     pub shutdown: Arc<AtomicBool>,
     pub audio_muted_signal: Arc<AtomicBool>,
 }
@@ -430,6 +462,9 @@ impl UnifiedApp {
                         SctpNotification::FileTransferFailed { filename, error } => {
                             return Task::done(AppMessage::FileTransferFailed { filename, error });
                         }
+                        // El chat se integra a la UI en el Hito 3
+                        SctpNotification::ChatReceived { .. }
+                        | SctpNotification::ChatSendFailed { .. } => {}
                     }
                 }
 
@@ -1135,6 +1170,7 @@ pub fn run_unified_app(config: UnifiedAppConfig) -> iced::Result {
     let local_frame_clone = Arc::clone(&config.local_frame);
     let remote_frame_clone = Arc::clone(&config.remote_frame);
     let running_call_clone = Arc::clone(&config.running_call);
+    let call_generation_clone = Arc::clone(&config.call_generation);
     let shutdown_clone = Arc::clone(&config.shutdown);
     let audio_muted_clone = Arc::clone(&config.audio_muted_signal);
     let signaling_tx = config.signaling_tx;
@@ -1160,6 +1196,7 @@ pub fn run_unified_app(config: UnifiedAppConfig) -> iced::Result {
                     width,
                     height,
                     running_call: running_call_clone,
+                    call_generation: call_generation_clone,
                     shutdown: shutdown_clone,
                     audio_muted_signal: audio_muted_clone,
                 }),
@@ -1198,6 +1235,7 @@ mod tests {
         let remote_frame = Arc::new(Mutex::new(None));
 
         let running_call = Arc::new(AtomicBool::new(false));
+        let call_generation = Arc::new(AtomicU64::new(0));
         let shutdown = Arc::new(AtomicBool::new(false));
         let audio_muted_signal = Arc::new(AtomicBool::new(false));
 
@@ -1213,6 +1251,7 @@ mod tests {
             width,
             height,
             running_call,
+            call_generation,
             shutdown,
             audio_muted_signal,
         });

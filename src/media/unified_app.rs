@@ -4,7 +4,8 @@
 use super::constants::{VIDEO_HEIGHT_F32, VIDEO_WIDTH_F32};
 use super::login_viewer::{LoginAction, LoginMessage, LoginState};
 use super::register_viewer::{RegisterAction, RegisterMessage, RegisterState};
-use iced::widget::{Image, button, column, container, row, text};
+use crate::chat::{ChatAuthor, ChatEntry, ChatLimits, ChatState, prepare_send};
+use iced::widget::{Image, button, column, container, row, scrollable, text, text_input};
 use iced::{Element, Font, Length, Subscription, Task, Theme, window};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
@@ -118,6 +119,12 @@ pub enum AppMessage {
     RejectFileTransfer { filename: String },
     FileTransferComplete { filename: String },
     FileTransferFailed { filename: String, error: String },
+
+    // Chat messages
+    ChatDraftChanged(String),
+    ChatSend,
+    ChatReceived { generation: u64, text: String },
+    ChatSendFailed { id: u64, generation: u64 },
 }
 
 pub enum AppScreen {
@@ -158,6 +165,10 @@ pub struct UnifiedApp {
 
     audio_muted_signal: Arc<AtomicBool>,
     is_muted: bool,
+
+    // Chat de la llamada actual
+    chat: ChatState,
+    call_generation: Arc<AtomicU64>,
 }
 
 #[derive(Debug, Clone)]
@@ -216,6 +227,8 @@ impl UnifiedApp {
             shutdown: config.shutdown,
             audio_muted_signal: config.audio_muted_signal,
             is_muted: false,
+            chat: ChatState::default(),
+            call_generation: config.call_generation,
         }
     }
 
@@ -366,6 +379,7 @@ impl UnifiedApp {
 
                     // Accept the call and transition to video
                     self.running_call.store(true, Ordering::SeqCst);
+                    self.start_call_chat();
                     self.screen = AppScreen::VideoCall {
                         joined: true,
                         file_path: String::new(),
@@ -403,6 +417,7 @@ impl UnifiedApp {
                 // El otro usuario aceptó nuestra llamada, iniciamos video
                 println!("[App] Llamada aceptada! Iniciando video...");
                 self.running_call.store(true, Ordering::SeqCst);
+                self.start_call_chat();
                 self.screen = AppScreen::VideoCall {
                     joined: true,
                     file_path: String::new(),
@@ -448,10 +463,14 @@ impl UnifiedApp {
                     return Task::done(AppMessage::RemoteCallEnded);
                 }
 
-                // Verificar notificaciones SCTP
-                if let Ok(guard) = self.sctp_notif_rx.try_lock()
-                    && let Ok(notif) = guard.try_recv()
-                {
+                // Verificar notificaciones SCTP (una por tick). Se suelta el lock
+                // antes de procesarla.
+                let notif = self
+                    .sctp_notif_rx
+                    .try_lock()
+                    .ok()
+                    .and_then(|guard| guard.try_recv().ok());
+                if let Some(notif) = notif {
                     match notif {
                         SctpNotification::FileOffer { filename, size } => {
                             return Task::done(AppMessage::IncomingFileOffer { filename, size });
@@ -462,9 +481,13 @@ impl UnifiedApp {
                         SctpNotification::FileTransferFailed { filename, error } => {
                             return Task::done(AppMessage::FileTransferFailed { filename, error });
                         }
-                        // El chat se integra a la UI en el Hito 3
-                        SctpNotification::ChatReceived { .. }
-                        | SctpNotification::ChatSendFailed { .. } => {}
+                        // El chat se procesa en el mismo tick
+                        SctpNotification::ChatReceived { generation, text } => {
+                            return self.update(AppMessage::ChatReceived { generation, text });
+                        }
+                        SctpNotification::ChatSendFailed { id, generation } => {
+                            return self.update(AppMessage::ChatSendFailed { id, generation });
+                        }
                     }
                 }
 
@@ -474,6 +497,7 @@ impl UnifiedApp {
             AppMessage::JoinCall => {
                 // desde lobby, iniciar la videollamada
                 self.running_call.store(true, Ordering::SeqCst);
+                self.start_call_chat();
                 self.screen = AppScreen::VideoCall {
                     joined: true,
                     file_path: String::new(),
@@ -490,6 +514,7 @@ impl UnifiedApp {
 
                 // termina la llamada, al lobby
                 self.running_call.store(false, Ordering::SeqCst);
+                self.chat.reset();
                 if let Ok(mut lf) = self.local_frame.lock() {
                     *lf = None;
                 }
@@ -507,6 +532,7 @@ impl UnifiedApp {
                 // El otro participante terminó la llamada, volvemos al lobby
                 println!("[App] El otro usuario terminó la llamada");
                 self.running_call.store(false, Ordering::SeqCst);
+                self.chat.reset();
                 if let Ok(mut lf) = self.local_frame.lock() {
                     *lf = None;
                 }
@@ -517,6 +543,56 @@ impl UnifiedApp {
                     users: Vec::new(),
                     incoming_call: None,
                 };
+                Task::none()
+            }
+
+            // === CHAT ===
+            AppMessage::ChatDraftChanged(draft) => {
+                if let AppScreen::VideoCall { .. } = self.screen {
+                    self.chat.draft = draft;
+                }
+                Task::none()
+            }
+            AppMessage::ChatSend => {
+                // Llamada activa: la pantalla es VideoCall. Canal listo: hay
+                // canal de comandos y running_call (design D6).
+                let in_call = matches!(self.screen, AppScreen::VideoCall { .. });
+                let channel_ready =
+                    self.sctp_tx.is_some() && self.running_call.load(Ordering::SeqCst);
+                let draft = self.chat.draft.clone();
+                if let Ok(out) = prepare_send(
+                    &mut self.chat,
+                    &draft,
+                    in_call,
+                    channel_ready,
+                    ChatLimits::PRODUCTION,
+                ) {
+                    let cmd = SctpCommand::SendChat {
+                        id: out.id,
+                        generation: self.call_generation.load(Ordering::SeqCst),
+                        text: out.text,
+                    };
+                    let sent = self.sctp_tx.as_ref().is_some_and(|tx| tx.send(cmd).is_ok());
+                    if !sent {
+                        // El hilo SCTP ya no recibe comandos: no se pierde en silencio
+                        self.chat.mark_failed(out.id);
+                    }
+                    self.chat.draft.clear();
+                }
+                Task::none()
+            }
+            AppMessage::ChatReceived { generation, text } => {
+                // Lo que no es de la llamada actual se descarta (design D2)
+                if self.is_current_call(generation) {
+                    self.chat
+                        .push_peer(&text, ChatLimits::PRODUCTION.history_max);
+                }
+                Task::none()
+            }
+            AppMessage::ChatSendFailed { id, generation } => {
+                if self.is_current_call(generation) {
+                    self.chat.mark_failed(id);
+                }
                 Task::none()
             }
 
@@ -1025,7 +1101,7 @@ impl UnifiedApp {
         // Base content (always visible)
         let base_content = column![
             text("Videollamada activa").size(20),
-            row![local_view, remote_view].spacing(20),
+            row![local_view, remote_view, self.view_chat()].spacing(20),
             text("Transferencia de archivos (SCTP)").size(16),
             sctp_controls,
             controls_row,
@@ -1137,6 +1213,41 @@ impl UnifiedApp {
             .into()
     }
 
+    // Panel de chat: historial literal, campo de texto (Enter envía) y botón.
+    fn view_chat(&self) -> Element<'_, AppMessage> {
+        let lines = self
+            .chat
+            .history
+            .iter()
+            .fold(column![].spacing(6), |col, entry| {
+                let line = text(chat_line(entry)).size(14);
+                let line = if entry.not_sent {
+                    line.color(iced::Color::from_rgb(0.9, 0.3, 0.3))
+                } else {
+                    line
+                };
+                col.push(line)
+            });
+
+        let input = text_input("Escribí un mensaje...", &self.chat.draft)
+            .on_input(AppMessage::ChatDraftChanged)
+            .on_submit(AppMessage::ChatSend)
+            .padding(8);
+
+        let send_button = button(text("Enviar"))
+            .padding(8)
+            .on_press(AppMessage::ChatSend);
+
+        column![
+            text("Chat").size(16),
+            scrollable(lines).height(Length::Fixed(VIDEO_HEIGHT_F32 - 90.0)),
+            row![input, send_button].spacing(8),
+        ]
+        .spacing(10)
+        .width(Length::Fixed(300.0))
+        .into()
+    }
+
     pub fn subscription(&self) -> Subscription<AppMessage> {
         match &self.screen {
             AppScreen::Login(_) | AppScreen::Register(_) => {
@@ -1157,8 +1268,31 @@ impl UnifiedApp {
         }
     }
 
+    // Llamada nueva: nueva generación y chat vacío. Lo que quede de la llamada
+    // anterior en los canales se descarta por generación (design D2).
+    fn start_call_chat(&mut self) {
+        self.call_generation.fetch_add(1, Ordering::SeqCst);
+        self.chat.reset();
+    }
+
+    // Un mensaje de chat pertenece a la llamada en curso.
+    fn is_current_call(&self, generation: u64) -> bool {
+        matches!(self.screen, AppScreen::VideoCall { .. })
+            && generation == self.call_generation.load(Ordering::SeqCst)
+    }
+
     pub fn theme(&self) -> Theme {
         Theme::Dark
+    }
+}
+
+/// Texto de una línea del historial del chat. Se muestra literal, sin
+/// interpretar marcado.
+fn chat_line(entry: &ChatEntry) -> String {
+    match entry.author {
+        ChatAuthor::Own { .. } if entry.not_sent => format!("Yo: {} (no enviado)", entry.text),
+        ChatAuthor::Own { .. } => format!("Yo: {}", entry.text),
+        ChatAuthor::Peer => format!("Participante: {}", entry.text),
     }
 }
 
@@ -1217,6 +1351,18 @@ mod tests {
         mpsc::Receiver<SignalingCommand>,
         mpsc::Receiver<SctpCommand>,
     ) {
+        let (app, sig_rx, sctp_rx, _sctp_notif_tx) = make_app_with_all_channels();
+        (app, sig_rx, sctp_rx)
+    }
+
+    // Igual que `make_app_with_channels`, pero también devuelve el emisor de
+    // notificaciones SCTP para inyectar lo que llegaría del hilo RX.
+    fn make_app_with_all_channels() -> (
+        UnifiedApp,
+        mpsc::Receiver<SignalingCommand>,
+        mpsc::Receiver<SctpCommand>,
+        mpsc::Sender<SctpNotification>,
+    ) {
         let pending_auth = Arc::new(Mutex::new(None));
         let auth_result = Arc::new(Mutex::new(None));
 
@@ -1225,7 +1371,7 @@ mod tests {
 
         let (sctp_tx, sctp_rx) = mpsc::channel::<SctpCommand>();
 
-        let (_sctp_notif_tx, sctp_notif_rx_inner) = mpsc::channel::<SctpNotification>();
+        let (sctp_notif_tx, sctp_notif_rx_inner) = mpsc::channel::<SctpNotification>();
         let sctp_notif_rx = Arc::new(Mutex::new(sctp_notif_rx_inner));
 
         let width = 2;
@@ -1256,7 +1402,19 @@ mod tests {
             audio_muted_signal,
         });
 
-        (app, sig_rx, sctp_rx)
+        (app, sig_rx, sctp_rx, sctp_notif_tx)
+    }
+
+    // Helper del Hito 3: pantalla de videollamada con `running_call` en true.
+    fn make_app_in_call() -> (
+        UnifiedApp,
+        mpsc::Receiver<SctpCommand>,
+        mpsc::Sender<SctpNotification>,
+    ) {
+        let (mut app, _sig_rx, sctp_rx, notif_tx) = make_app_with_all_channels();
+        force_video(&mut app);
+        app.running_call.store(true, Ordering::SeqCst);
+        (app, sctp_rx, notif_tx)
     }
 
     fn force_lobby(app: &mut UnifiedApp) {
@@ -1558,5 +1716,243 @@ mod tests {
 
         let _ = app.view();
         let _ = app.subscription();
+    }
+
+    // ================= Chat (Hito 3) =================
+
+    use crate::chat::{ChatAuthor, ChatEntry};
+
+    fn current_gen(app: &UnifiedApp) -> u64 {
+        app.call_generation.load(Ordering::SeqCst)
+    }
+
+    fn own(id: u64, text: &str) -> ChatEntry {
+        ChatEntry {
+            author: ChatAuthor::Own { id },
+            text: text.to_string(),
+            not_sent: false,
+        }
+    }
+
+    fn peer(text: &str) -> ChatEntry {
+        ChatEntry {
+            author: ChatAuthor::Peer,
+            text: text.to_string(),
+            not_sent: false,
+        }
+    }
+
+    fn history(app: &UnifiedApp) -> Vec<ChatEntry> {
+        app.chat.history.iter().cloned().collect()
+    }
+
+    fn type_and_send(app: &mut UnifiedApp, text: &str) {
+        let _ = app.update(AppMessage::ChatDraftChanged(text.to_string()));
+        let _ = app.update(AppMessage::ChatSend);
+    }
+
+    fn tick(app: &mut UnifiedApp) {
+        let _ = app.update(AppMessage::FrameUpdate(Instant::now()));
+    }
+
+    #[test]
+    fn chat_3_1_actualiza_borrador() {
+        let (mut app, _sctp_rx, _notif_tx) = make_app_in_call();
+
+        let _ = app.update(AppMessage::ChatDraftChanged("Hola Bob".to_string()));
+
+        assert_eq!(app.chat.draft, "Hola Bob");
+    }
+
+    #[test]
+    fn chat_3_2_enviar_agrega_al_historial_y_limpia_borrador() {
+        let (mut app, sctp_rx, _notif_tx) = make_app_in_call();
+
+        type_and_send(&mut app, "Hola Bob");
+
+        assert_eq!(
+            sctp_rx.try_recv(),
+            Ok(SctpCommand::SendChat {
+                id: 1,
+                generation: current_gen(&app),
+                text: "Hola Bob".to_string()
+            })
+        );
+        assert_eq!(history(&app), vec![own(1, "Hola Bob")]);
+        assert_eq!(app.chat.draft, "");
+        let _ = app.view();
+    }
+
+    #[test]
+    fn chat_3_3_no_envia_borrador_invalido() {
+        let (mut app, sctp_rx, _notif_tx) = make_app_in_call();
+        let largo = "a".repeat(4097);
+
+        for draft in ["", "   ", largo.as_str()] {
+            type_and_send(&mut app, draft);
+            assert_eq!(sctp_rx.try_recv(), Err(mpsc::TryRecvError::Empty));
+            assert!(history(&app).is_empty());
+        }
+
+        // Control: un borrador válido sí sale, así que el rechazo no es casual
+        type_and_send(&mut app, "ok");
+        assert!(matches!(
+            sctp_rx.try_recv(),
+            Ok(SctpCommand::SendChat { .. })
+        ));
+    }
+
+    #[test]
+    fn chat_3_4_muestra_mensaje_recibido() {
+        let (mut app, _sctp_rx, notif_tx) = make_app_in_call();
+        let generation = current_gen(&app);
+
+        let _ = notif_tx.send(SctpNotification::ChatReceived {
+            generation,
+            text: "Hola Alice".to_string(),
+        });
+        tick(&mut app);
+
+        assert_eq!(history(&app), vec![peer("Hola Alice")]);
+        let _ = app.view();
+    }
+
+    #[test]
+    fn chat_3_5_procesa_una_notificacion_por_tick() {
+        let (mut app, _sctp_rx, notif_tx) = make_app_in_call();
+        let generation = current_gen(&app);
+        for text in ["uno", "dos", "tres"] {
+            let _ = notif_tx.send(SctpNotification::ChatReceived {
+                generation,
+                text: text.to_string(),
+            });
+        }
+
+        tick(&mut app);
+        assert_eq!(history(&app), vec![peer("uno")]);
+        tick(&mut app);
+        tick(&mut app);
+
+        assert_eq!(history(&app), vec![peer("uno"), peer("dos"), peer("tres")]);
+    }
+
+    #[test]
+    fn chat_3_6_muestra_no_enviado() {
+        let (mut app, _sctp_rx, notif_tx) = make_app_in_call();
+        type_and_send(&mut app, "uno");
+        type_and_send(&mut app, "dos");
+        let generation = current_gen(&app);
+
+        let _ = notif_tx.send(SctpNotification::ChatSendFailed { id: 2, generation });
+        tick(&mut app);
+
+        let mut fallido = own(2, "dos");
+        fallido.not_sent = true;
+        assert_eq!(history(&app), vec![own(1, "uno"), fallido]);
+        let lines: Vec<String> = app.chat.history.iter().map(chat_line).collect();
+        assert!(!lines[0].contains("no enviado"));
+        assert!(lines[1].contains("dos") && lines[1].contains("no enviado"));
+        let _ = app.view();
+    }
+
+    #[test]
+    fn chat_3_7_fin_de_llamada_limpia_chat() {
+        for fin in [AppMessage::EndCall, AppMessage::RemoteCallEnded] {
+            let (mut app, _sctp_rx, _notif_tx) = make_app_in_call();
+            let _ = app.update(AppMessage::JoinCall);
+            type_and_send(&mut app, "hola");
+            let _ = app.update(AppMessage::ChatDraftChanged("borrador".to_string()));
+            assert_eq!(history(&app).len(), 1);
+
+            let _ = app.update(fin);
+            assert!(matches!(app.screen, AppScreen::Lobby { .. }));
+            let _ = app.update(AppMessage::JoinCall);
+
+            assert!(history(&app).is_empty());
+            assert_eq!(app.chat.draft, "");
+        }
+    }
+
+    #[test]
+    fn chat_3_8_ignora_notificaciones_de_llamada_anterior() {
+        let (mut app, _sctp_rx, notif_tx) = make_app_in_call();
+        let _ = app.update(AppMessage::JoinCall);
+        let _ = app.update(AppMessage::EndCall);
+        // Llegan con la app en el lobby: el hilo RX las marca con la
+        // generación vigente, que es la de la llamada que terminó
+        let vieja = current_gen(&app);
+        for text in ["uno", "dos"] {
+            let _ = notif_tx.send(SctpNotification::ChatReceived {
+                generation: vieja,
+                text: text.to_string(),
+            });
+        }
+
+        let _ = app.update(AppMessage::JoinCall);
+        tick(&mut app);
+        tick(&mut app);
+
+        assert!(history(&app).is_empty());
+        // Control: un mensaje de la llamada nueva sí aparece
+        let _ = notif_tx.send(SctpNotification::ChatReceived {
+            generation: current_gen(&app),
+            text: "nuevo".to_string(),
+        });
+        tick(&mut app);
+        assert_eq!(history(&app), vec![peer("nuevo")]);
+    }
+
+    #[test]
+    fn chat_3_9_flujo_de_archivos_sin_cambios() {
+        let (mut app, _sig_rx, sctp_rx) = make_app_with_channels();
+        force_video(&mut app);
+        app.chat.push_own("hola", crate::chat::CHAT_HISTORY_MAX);
+        if let AppScreen::VideoCall { file_path, .. } = &mut app.screen {
+            *file_path = "/tmp/a.bin".to_string();
+        }
+
+        let _ = app.update(AppMessage::SendFile);
+
+        assert_eq!(
+            sctp_rx.try_recv(),
+            Ok(SctpCommand::SendFile {
+                path: "/tmp/a.bin".to_string()
+            })
+        );
+        assert_eq!(sctp_rx.try_recv(), Err(mpsc::TryRecvError::Empty));
+    }
+
+    #[test]
+    fn chat_3_10_no_envia_con_running_call_en_falso() {
+        let (mut app, sctp_rx, _notif_tx) = make_app_in_call();
+        app.running_call.store(false, Ordering::SeqCst);
+
+        type_and_send(&mut app, "Hola");
+
+        assert_eq!(sctp_rx.try_recv(), Err(mpsc::TryRecvError::Empty));
+        assert!(history(&app).is_empty());
+        // Control: con running_call en true el mismo envío sí sale
+        app.running_call.store(true, Ordering::SeqCst);
+        let _ = app.update(AppMessage::ChatSend);
+        assert!(matches!(
+            sctp_rx.try_recv(),
+            Ok(SctpCommand::SendChat { .. })
+        ));
+    }
+
+    #[test]
+    fn chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado() {
+        let (mut app, sctp_rx, _notif_tx) = make_app_in_call();
+        // El hilo SCTP TX terminó: el canal de comandos ya no acepta mensajes
+        drop(sctp_rx);
+
+        type_and_send(&mut app, "Hola");
+
+        let mut fallido = own(1, "Hola");
+        fallido.not_sent = true;
+        assert_eq!(history(&app), vec![fallido]);
+        let lines: Vec<String> = app.chat.history.iter().map(chat_line).collect();
+        assert!(lines[0].contains("Hola") && lines[0].contains("no enviado"));
+        let _ = app.view();
     }
 }

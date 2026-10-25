@@ -1,0 +1,204 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 128 tests
+test candidates::tests::test_priority_formula_example ... ok
+test candidates::tests::test_host_candidate ... ok
+test candidates::tests::test_display_format ... ok
+test chat::tests::chat_1_12_valores_de_produccion ... ok
+test chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios ... ok
+test chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite ... ok
+test chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope ... ok
+test chat::tests::chat_1_1_envia_mensaje_valido ... ok
+test chat::tests::chat_1_4_conserva_espacios_del_texto ... ok
+test chat::tests::chat_1_11_nueva_sesion_arranca_vacia ... ok
+test chat::tests::chat_1_5_codifica_y_decodifica_utf8 ... ok
+test chat::tests::chat_1_6_descarta_payload_invalido_sin_panic ... ok
+test chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa ... ok
+test chat::tests::chat_1_8_marca_no_enviado_por_id_local ... ok
+test chat::tests::chat_1_9_recibe_en_orden_sin_duplicados ... ok
+test client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat ... ok
+test client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat ... ok
+test client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo ... ok
+test client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga ... ok
+test client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta ... ok
+test client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje ... ok
+test client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada ... ok
+test client::transport::sctp_harness::tests::harness_conecta_dos_endpoints_en_memoria ... ok
+test client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id ... ok
+test media::auth_flow::tests::test_initial_state_is_login ... ok
+test media::auth_flow::tests::test_join_lobby_sets_flag ... ok
+test media::auth_flow::tests::test_tick_handles_auth_success ... ok
+test media::auth_flow::tests::test_tick_handles_auth_failure ... ok
+test media::codec::vp8::tests::test_rgba_buffer_mutex ... ok
+test media::iced_viewer::tests::test_end_call_stops_transmission_and_clears_buffers ... ok
+test media::iced_viewer::tests::test_initial_state_is_lobby ... ok
+test media::iced_viewer::tests::test_join_call_starts_transmission ... ok
+test media::iced_viewer::tests::test_system_close_triggers_shutdown ... ok
+test media::jitter_buffer::tests::test_complex_sequence ... ok
+test media::jitter_buffer::tests::test_empty_buffer ... ok
+test media::jitter_buffer::tests::test_max_delay_discard ... ok
+test media::jitter_buffer::tests::test_ordering_min_heap ... ok
+test media::jitter_buffer::tests::test_target_delay_buffering ... ok
+test media::lobby_viewer::tests::subscription_smoke ... ok
+test media::lobby_viewer::tests::theme_is_dark ... ok
+test media::lobby_viewer::tests::update_join_is_idempotent ... ok
+test media::lobby_viewer::tests::update_join_sets_flag_true ... ok
+test media::lobby_viewer::tests::view_builds_without_panic ... ok
+test media::lobby_viewer::tests::view_does_not_toggle_flag_by_itself ... ok
+test media::login_viewer::tests::default_is_empty_and_no_error ... ok
+test media::login_viewer::tests::login_pressed_with_both_empty_sets_error_and_no_action ... ok
+test media::login_viewer::tests::login_pressed_with_missing_fields_sets_error_and_no_action ... ok
+test media::login_viewer::tests::login_pressed_with_valid_fields_returns_login_action_with_cloned_values ... ok
+test media::login_viewer::tests::new_is_empty_and_no_error ... ok
+test media::login_viewer::tests::password_changed_updates_password ... ok
+test media::login_viewer::tests::register_pressed_returns_switch_action ... ok
+test media::login_viewer::tests::set_error_sets_error_message ... ok
+test media::login_viewer::tests::update_does_not_clear_existing_error_on_typing ... ok
+test media::login_viewer::tests::username_changed_updates_username ... ok
+test media::login_viewer::tests::view_builds_without_panic_when_error_present ... ok
+test media::login_viewer::tests::view_builds_without_panic_when_no_error ... ok
+test media::register_viewer::tests::back_to_login_pressed_returns_back_action ... ok
+test media::register_viewer::tests::default_is_empty_and_no_error ... ok
+test media::register_viewer::tests::email_changed_updates_email ... ok
+test media::register_viewer::tests::new_is_empty_and_no_error ... ok
+test media::register_viewer::tests::password_changed_updates_password ... ok
+test media::register_viewer::tests::register_pressed_with_both_missing_sets_error ... ok
+test media::register_viewer::tests::register_pressed_with_missing_password_sets_error ... ok
+test media::register_viewer::tests::register_pressed_with_missing_username_sets_error ... ok
+test media::register_viewer::tests::register_pressed_with_valid_fields_and_empty_email_returns_action_with_none_email ... ok
+test client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo ... ok
+test media::register_viewer::tests::register_pressed_with_valid_fields_and_nonempty_email_returns_action_with_some_email ... ok
+test media::register_viewer::tests::set_error_sets_error_message ... ok
+test media::register_viewer::tests::update_does_not_clear_existing_error_on_typing ... ok
+test media::register_viewer::tests::username_changed_updates_username ... ok
+test media::register_viewer::tests::view_builds_without_panic_when_error_present ... ok
+test media::register_viewer::tests::view_builds_without_panic_when_no_error ... ok
+test media::unified_app::tests::accept_call_sends_accept_and_switches_to_video_and_sets_running_call ... ok
+test media::unified_app::tests::call_user_by_click_sends_call_request ... ok
+test media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso ... ok
+test media::unified_app::tests::chat_3_1_actualiza_borrador ... ok
+test media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador ... ok
+test media::unified_app::tests::chat_3_3_no_envia_borrador_invalido ... ok
+test media::unified_app::tests::chat_3_4_muestra_mensaje_recibido ... ok
+test media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick ... ok
+test media::unified_app::tests::chat_3_6_muestra_no_enviado ... ok
+test media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat ... ok
+test media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior ... ok
+test media::unified_app::tests::chat_3_9_flujo_de_archivos_sin_cambios ... ok
+test media::unified_app::tests::end_call_sends_end_call_clears_frames_and_returns_to_lobby ... ok
+test media::unified_app::tests::file_path_changed_updates_state_in_video ... ok
+test media::unified_app::tests::frame_update_consumes_call_ended_response_if_present ... ok
+test media::unified_app::tests::incoming_call_sets_incoming_call_field ... ok
+test media::unified_app::tests::reject_call_sends_reject_and_clears_incoming_call ... ok
+test media::codec::vp8::tests::test_decoder_has_appsrc ... ok
+test media::unified_app::tests::request_user_list_sends_command ... ok
+test media::unified_app::tests::send_file_sends_sctp_command_with_current_path ... ok
+test media::unified_app::tests::system_close_sets_shutdown_and_stops_running_call ... ok
+test media::unified_app::tests::theme_is_dark ... ok
+test media::unified_app::tests::toggle_audio_flips_is_muted_and_updates_atomic_signal ... ok
+test media::unified_app::tests::update_user_list_filters_current_user ... ok
+test media::unified_app::tests::view_and_subscription_smoke_for_each_screen ... ok
+test rtp::tests::test_reassembler_happy_path ... ok
+test rtp::tests::test_reassembler_out_of_order ... ok
+test rtp::tests::test_reassembler_timestamp_change_clears_state ... ok
+test rtp::tests::test_rtp_lite_packet_min_size ... ok
+test rtp::tests::test_rtp_lite_packet_roundtrip ... ok
+test rtp::tests::test_sender_multiple_packets ... ok
+test rtp::tests::test_sender_sequence_wrapping ... ok
+test rtp::tests::test_sender_single_packet ... ok
+test sdp::parsing::tests::test_parse_attribute_with_value ... ok
+test sdp::parsing::tests::test_parse_attribute_without_value ... ok
+test sdp::parsing::tests::test_parse_connection_missing_field ... ok
+test sdp::parsing::tests::test_parse_connection_ok ... ok
+test sdp::parsing::tests::test_parse_media_bad_port ... ok
+test sdp::parsing::tests::test_parse_media_multiple_formats ... ok
+test sdp::parsing::tests::test_parse_media_single_format ... ok
+test sdp::parsing::tests::test_parse_origin ... ok
+test sdp::parsing::tests::test_parse_origin_bad_number ... ok
+test sdp::parsing::tests::test_parse_origin_missing_field ... ok
+test sdp::parsing::tests::test_parse_timing_bad_number ... ok
+test sdp::parsing::tests::test_parse_timing_missing_field ... ok
+test sdp::parsing::tests::test_parse_timing_ok ... ok
+test sdp::tests::parse_basic_audio_session ... ok
+test media::codec::vp8::tests::test_decoder_pipeline_builds ... ok
+test media::codec::vp8::tests::test_encoder_pipeline_builds ... ok
+test media::codec::vp8::tests::test_encoder_no_rgba ... ok
+test media::unified_app::tests::remote_call_ended_clears_frames_and_returns_to_lobby_without_sending_endcall ... ok
+test media::unified_app::tests::accept_call_without_incoming_call_does_nothing ... ok
+test media::audio::tests::test_audio_player_initialization ... ok
+test media::audio::tests::test_audio_encoder_initialization_and_shutdown ... ok
+test media::audio::tests::test_loopback_integration ... ok
+test media::audio::tests::test_audio_encoder_mute_logic ... ok
+
+test result: ok. 128 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+     Running unittests src/bin/cliente.rs (target/debug/deps/cliente-de8cc22750d26762)
+
+running 7 tests
+test tests::audio_ports_are_video_port_plus_two_saturating ... ok
+test tests::jitter_buffer_config_values_used_in_client_are_reasonable ... ok
+test tests::sdp_source_pipeline_keeps_custom_pipeline_if_not_dev_video ... ok
+test tests::sdp_defaults_when_missing_attributes_and_clamps_minimums ... ok
+test tests::sdp_extracts_source_pipeline_fps_and_rtcp_settings ... ok
+test tests::generate_local_identity_fingerprint_matches_identity_certificate ... ok
+test tests::generate_local_identity_fingerprint_is_upper_hex_64 ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src/main.rs (target/debug/deps/room_rtc-de0c601f50682d76)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/server.rs (target/debug/deps/server-661800ea26327346)
+
+running 3 tests
+test tests::test_register_user ... ok
+test tests::test_duplicate_login ... ok
+test tests::test_call_flow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/t_rtp.rs (target/debug/deps/t_rtp-fc0e480c338ef8dd)
+
+running 1 test
+test rtp_lite_packetize_parse_reassemble_roundtrip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/t_sdp.rs (target/debug/deps/t_sdp-3fb2d918a657ff35)
+
+running 1 test
+test sdp_parsing_reads_origin_media_and_attributes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/t_signaling.rs (target/debug/deps/t_signaling-dbee2895522b8fa9)
+
+running 1 test
+Servidor TLS iniciado en: 127.0.0.1:8443
+Nueva conexión TLS desde: 127.0.0.1:53107
+Cliente desconectado: 127.0.0.1:53107
+Nueva conexión TLS desde: 127.0.0.1:53108
+Nueva conexión TLS desde: 127.0.0.1:53109
+Nueva conexión TLS desde: 127.0.0.1:53110
+[Server] Notificando a test2 que la llamada terminó
+Nueva conexión TLS desde: 127.0.0.1:53111
+Servidor TLS iniciado en: 127.0.0.1:8443
+Nueva conexión TLS desde: 127.0.0.1:53114
+Cliente desconectado: 127.0.0.1:53114
+Nueva conexión TLS desde: 127.0.0.1:53115
+test signaling_end_to_end_register_login_call_and_persistence ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+
+   Doc-tests room_rtc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

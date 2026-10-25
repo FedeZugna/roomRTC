@@ -1,0 +1,95 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.14s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 10 tests
+test media::unified_app::tests::chat_3_9_flujo_de_archivos_sin_cambios ... ok
+test media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso ... FAILED
+test media::unified_app::tests::chat_3_3_no_envia_borrador_invalido ... FAILED
+test media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador ... FAILED
+test media::unified_app::tests::chat_3_6_muestra_no_enviado ... FAILED
+test media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick ... FAILED
+test media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior ... FAILED
+test media::unified_app::tests::chat_3_4_muestra_mensaje_recibido ... FAILED
+test media::unified_app::tests::chat_3_1_actualiza_borrador ... FAILED
+test media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat ... FAILED
+
+failures:
+
+---- media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso stdout ----
+
+thread 'media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso' (747546) panicked at src/media/unified_app.rs:1831:9:
+assertion failed: matches!(sctp_rx.try_recv(), Ok(SctpCommand::SendChat { .. }))
+
+---- media::unified_app::tests::chat_3_3_no_envia_borrador_invalido stdout ----
+
+thread 'media::unified_app::tests::chat_3_3_no_envia_borrador_invalido' (747549) panicked at src/media/unified_app.rs:1690:9:
+assertion failed: matches!(sctp_rx.try_recv(), Ok(SctpCommand::SendChat { .. }))
+
+---- media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador stdout ----
+
+thread 'media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador' (747548) panicked at src/media/unified_app.rs:1664:9:
+assertion `left == right` failed
+  left: Err(Empty)
+ right: Ok(SendChat { id: 1, generation: 0, text: "Hola Bob" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- media::unified_app::tests::chat_3_6_muestra_no_enviado stdout ----
+
+thread 'media::unified_app::tests::chat_3_6_muestra_no_enviado' (747552) panicked at src/media/unified_app.rs:1745:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Own { id: 1 }, text: "uno", not_sent: false }, ChatEntry { author: Own { id: 2 }, text: "dos", not_sent: true }]
+
+---- media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick stdout ----
+
+thread 'media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick' (747551) panicked at src/media/unified_app.rs:1723:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Peer, text: "uno", not_sent: false }]
+
+---- media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior stdout ----
+
+thread 'media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior' (747554) panicked at src/media/unified_app.rs:1796:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Peer, text: "nuevo", not_sent: false }]
+
+---- media::unified_app::tests::chat_3_4_muestra_mensaje_recibido stdout ----
+
+thread 'media::unified_app::tests::chat_3_4_muestra_mensaje_recibido' (747550) panicked at src/media/unified_app.rs:1707:9:
+assertion `left == right` failed
+  left: []
+ right: [ChatEntry { author: Peer, text: "Hola Alice", not_sent: false }]
+
+---- media::unified_app::tests::chat_3_1_actualiza_borrador stdout ----
+
+thread 'media::unified_app::tests::chat_3_1_actualiza_borrador' (747547) panicked at src/media/unified_app.rs:1655:9:
+assertion `left == right` failed
+  left: ""
+ right: "Hola Bob"
+
+---- media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat stdout ----
+
+thread 'media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat' (747553) panicked at src/media/unified_app.rs:1759:13:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+
+failures:
+    media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso
+    media::unified_app::tests::chat_3_1_actualiza_borrador
+    media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador
+    media::unified_app::tests::chat_3_3_no_envia_borrador_invalido
+    media::unified_app::tests::chat_3_4_muestra_mensaje_recibido
+    media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick
+    media::unified_app::tests::chat_3_6_muestra_no_enviado
+    media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat
+    media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior
+
+test result: FAILED. 1 passed; 9 failed; 0 ignored; 0 measured; 118 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,78 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.74s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 32 tests
+test chat::tests::chat_1_12_valores_de_produccion ... ok
+test chat::tests::chat_1_5_codifica_y_decodifica_utf8 ... ok
+test chat::tests::chat_1_2_rechaza_mensaje_vacio_o_solo_espacios ... ok
+test chat::tests::chat_1_7_rechaza_envio_sin_llamada_activa ... ok
+test chat::tests::chat_1_11_nueva_sesion_arranca_vacia ... ok
+test chat::tests::chat_1_4_conserva_espacios_del_texto ... ok
+test chat::tests::chat_1_6_descarta_payload_invalido_sin_panic ... ok
+test chat::tests::chat_1_3_rechaza_mensaje_sobre_el_limite ... ok
+test chat::tests::chat_1_10_descarta_el_mas_viejo_al_superar_el_tope ... ok
+test chat::tests::chat_1_9_recibe_en_orden_sin_duplicados ... ok
+test chat::tests::chat_1_8_marca_no_enviado_por_id_local ... ok
+test chat::tests::chat_1_1_envia_mensaje_valido ... ok
+test client::transport::sctp_chat::tests::chat_2_9_envio_sin_asociacion_reporta_fallo ... ok
+test client::transport::sctp_chat::tests::chat_2_3_oferta_de_archivo_no_genera_chat ... ok
+test client::transport::sctp_chat::tests::chat_2_4_contenido_de_archivo_no_genera_chat ... ok
+test media::unified_app::tests::chat_3_1_actualiza_borrador ... ok
+test media::unified_app::tests::chat_3_10_no_envia_con_running_call_en_falso ... ok
+test media::unified_app::tests::chat_3_3_no_envia_borrador_invalido ... ok
+test media::unified_app::tests::chat_3_5_procesa_una_notificacion_por_tick ... ok
+test media::unified_app::tests::chat_3_2_enviar_agrega_al_historial_y_limpia_borrador ... ok
+test media::unified_app::tests::chat_3_4_muestra_mensaje_recibido ... ok
+test media::unified_app::tests::chat_3_6_muestra_no_enviado ... ok
+test media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado ... ok
+test media::unified_app::tests::chat_3_7_fin_de_llamada_limpia_chat ... ok
+test media::unified_app::tests::chat_3_8_ignora_notificaciones_de_llamada_anterior ... ok
+test media::unified_app::tests::chat_3_9_flujo_de_archivos_sin_cambios ... ok
+test client::transport::sctp_chat::tests::chat_2_2_preserva_orden_de_rafaga ... ok
+test client::transport::sctp_chat::tests::chat_2_7_fallo_de_escritura_reporta_id ... ok
+test client::transport::sctp_chat::tests::chat_2_5_chat_con_texto_offer_no_genera_oferta ... ok
+test client::transport::sctp_chat::tests::chat_2_1_entrega_un_mensaje ... ok
+test client::transport::sctp_chat::tests::chat_2_8_comandos_pendientes_no_pasan_a_nueva_llamada ... ok
+test client::transport::sctp_chat::tests::chat_2_6_chat_durante_transferencia_de_archivo ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 97 filtered out; finished in 0.01s
+
+     Running unittests src/bin/cliente.rs (target/debug/deps/cliente-de8cc22750d26762)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/room_rtc-de0c601f50682d76)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/server.rs (target/debug/deps/server-661800ea26327346)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/t_rtp.rs (target/debug/deps/t_rtp-fc0e480c338ef8dd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/t_sdp.rs (target/debug/deps/t_sdp-3fb2d918a657ff35)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/t_signaling.rs (target/debug/deps/t_signaling-dbee2895522b8fa9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+

@@ -1,0 +1,26 @@
+   Compiling room_rtc v0.1.0 (/Users/federicozugna/Documents/FIUBA/RoomRTC/roomRTC)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.79s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/room_rtc-605bb33ccce453b9)
+
+running 1 test
+test media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado ... FAILED
+
+failures:
+
+---- media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado stdout ----
+
+thread 'media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado' (762786) panicked at src/media/unified_app.rs:1953:9:
+assertion `left == right` failed
+  left: [ChatEntry { author: Own { id: 1 }, text: "Hola", not_sent: false }]
+ right: [ChatEntry { author: Own { id: 1 }, text: "Hola", not_sent: true }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    media::unified_app::tests::chat_3_11_marca_no_enviado_si_el_canal_esta_cerrado
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 128 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

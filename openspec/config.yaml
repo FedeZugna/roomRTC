@@ -1,0 +1,53 @@
+schema: spec-driven
+
+context: |
+  Escribir todos los artefactos en español.
+  Feature: chat de texto entre los dos participantes de una videollamada, solo
+  durante la llamada activa. La fuente de verdad del alcance y de las pruebas
+  de aceptación está en docs/chat/roomRTC_todo.md y docs/chat/test_aceptacion.md.
+  Este change cubre los Hitos 1 a 3; el Hito 4 se especifica al cerrar el Hito 3.
+  El Hito 0 (exploración) se documenta en docs/chat/exploracion.md.
+  Restricciones: no cambiar src/bin/server.rs ni el enum Message de señalización;
+  el servidor no participa del chat. El chat no debe afectar la transferencia de
+  archivos, que usa los streams SCTP 0 (control) y 1 (contenido).
+  Los límites de 4096 bytes por mensaje y 200 mensajes de historial son
+  provisorios hasta confirmarlos en la exploración.
+  Línea base: tests en verde, cargo fmt limpio y cargo clippy --all-targets
+  -- -D warnings sin advertencias. No se introducen regresiones.
+  tests/t_signaling.rs usa el puerto 8443 y OpenSSL.
+
+rules:
+  proposal:
+    - Indicar explícitamente qué queda fuera de alcance.
+    - Referenciar los documentos de docs/chat/ en lugar de repetir su contenido.
+  specs:
+    - Cada requirement tiene al menos un scenario Given/When/Then.
+    - Cada scenario se mapea a un test llamado chat_<hito>_<n>_<descripcion>,
+      con la numeración de docs/chat/test_aceptacion.md.
+    - Describir comportamiento observable, no implementación. Los nombres de
+      tipos, módulos y el ID del stream SCTP se fijan en el Hito 0.
+    - Marcar como supuesto todo lo que todavía no esté verificado.
+  design:
+    - Registrar cada decisión abierta de la sección "Antes de empezar" con su
+      alternativa descartada y el motivo.
+    - Distinguir hechos de hipótesis, citando archivo y línea.
+  tasks:
+    - Agrupar por hito. En cada hito, primero los tests (que deben fallar por
+      la funcionalidad ausente) y después la implementación.
+    - Incluir una tarea final de verificación de los gates por hito.
+
+operations:
+  apply:
+    guidance:
+      - Un hito por vez. No pasar al siguiente si el anterior no cumple sus gates.
+      - No modificar ni borrar tests para ocultar fallos; si cambia un requisito,
+        actualizar primero la spec.
+      - El código nuevo del chat no usa unwrap, expect ni panic!; los errores
+        se devuelven como Result.
+      - Ejecutar cargo test, cargo fmt --all -- --check y cargo clippy
+        --all-targets -- -D warnings, y mostrar la salida real.
+      - Si aparece un riesgo no previsto, detenerse y volver a explorar.
+  archive:
+    guidance:
+      - Archivar solo con todos los gates cumplidos y la prueba manual registrada.
+      - Resumir el resultado del archivado antes de terminar.

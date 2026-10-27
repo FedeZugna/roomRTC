@@ -34,3 +34,7 @@ path = "src/bin/cliente.rs"
 [[bin]]
 name = "server"
 path = "src/bin/server.rs"
+
+[dev-dependencies]
+# Solo para los tests e2e del chat: ejecutar los Task de iced (design D7)
+iced_runtime = "0.13"

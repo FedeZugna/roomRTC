@@ -1370,6 +1370,10 @@ pub fn run_unified_app(config: UnifiedAppConfig) -> iced::Result {
 }
 
 #[cfg(test)]
+#[path = "unified_app_e2e_tests.rs"]
+mod e2e_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::atomic::Ordering;
@@ -1387,7 +1391,7 @@ mod tests {
 
     // Igual que `make_app_with_channels`, pero también devuelve el emisor de
     // notificaciones SCTP para inyectar lo que llegaría del hilo RX.
-    fn make_app_with_all_channels() -> (
+    pub(super) fn make_app_with_all_channels() -> (
         UnifiedApp,
         mpsc::Receiver<SignalingCommand>,
         mpsc::Receiver<SctpCommand>,
@@ -1454,7 +1458,7 @@ mod tests {
         };
     }
 
-    fn force_video(app: &mut UnifiedApp) {
+    pub(super) fn force_video(app: &mut UnifiedApp) {
         app.screen = AppScreen::VideoCall {
             joined: true,
             file_path: String::new(),

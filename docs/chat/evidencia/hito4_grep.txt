@@ -1,0 +1,8 @@
+$ grep -nE "unwrap\(|expect\(|panic!" src/media/unified_app_e2e_tests.rs
+(exit 1: 1 = sin coincidencias)
+$ git diff src/media/unified_app.rs | grep -E "^\+" | grep -nE "unwrap\(|expect\(|panic!"
+(exit 1: 1 = sin coincidencias)
+$ grep -nE "UdpSocket|TcpStream|TcpListener|DtlsStream|gstreamer|gst::|avfvideosrc|v4l2src|opencv|\.config|std::fs|File::" src/media/unified_app_e2e_tests.rs src/client/transport/sctp_harness.rs
+(exit 1: 1 = sin coincidencias)
+$ git diff --stat -- src/bin/server.rs src/client/signaling/messages.rs
+(vacío = sin cambios)

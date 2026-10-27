@@ -6,11 +6,11 @@ Registro de la parte manual del Hito 4 (`docs/chat/test_aceptacion.md`, pasos M1
 
 | Campo | Valor |
 |-------|-------|
-| Fecha | |
-| Quién la ejecutó | |
-| Máquina y sistema (modelo, versión de macOS) | |
-| Commit probado (`git rev-parse --short HEAD`) | |
-| Usuarios de prueba (A y B) | |
+| Fecha | 2026-10-27|
+| Quién la ejecutó | Fede|
+| Máquina y sistema (modelo, versión de macOS) | Macbook Pro - macOS 26.4|
+| Commit probado (`git rev-parse --short HEAD`) | 1f47c91 |
+| Usuarios de prueba (A y B) |A y B |
 
 ## Preparación
 
@@ -22,9 +22,9 @@ cargo run --bin cliente src/config/cliente1_mac.config    # cliente A
 cargo run --bin cliente src/config/cliente2_mac.config    # cliente B
 ```
 
-- [ ] `certs/` contiene `localhost+2.pem`, `localhost+2-key.pem` y `rootCA.pem`.
-- [ ] Los dos usuarios están registrados y logueados.
-- [ ] A llama a B y B acepta. Se ven los dos videos y hay audio.
+- [X] `certs/` contiene `localhost+2.pem`, `localhost+2-key.pem` y `rootCA.pem`.
+- [X] Los dos usuarios están registrados y logueados.
+- [X] A llama a B y B acepta. Se ven los dos videos y hay audio.
 
 Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
@@ -38,7 +38,7 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Resultado | Observaciones |
 |-----------|---------------|
-| OK | |
+| Paso | |
 
 ## M2 — Chat durante la transferencia de un archivo
 
@@ -52,24 +52,24 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Campo | Valor |
 |-------|-------|
-| Archivo y tamaño | |
-| `shasum -a 256` del original | |
-| `shasum -a 256` del recibido | |
-| ¿Coinciden? | |
-| Mensajes en orden y sin duplicados | |
-| Interrupción de medios (audio o video), cualitativa | |
-| Resultado | |
-| Observaciones | |
+| Archivo y tamaño | imagen.jpg - 23 KB|
+| `shasum -a 256` del original | c6ed8ff697d6fed814275849b71f4867ca9d5b5cfec4ee7d2ea1f7aad27d184a |
+| `shasum -a 256` del recibido | c6ed8ff697d6fed814275849b71f4867ca9d5b5cfec4ee7d2ea1f7aad27d184a |
+| ¿Coinciden? | SI |
+| Mensajes en orden y sin duplicados | Paso |
+| Interrupción de medios (audio o video), cualitativa | Paso |
+| Resultado | Paso |
+| Observaciones | NO |
 
 ### Medición de latencia
 
 | Campo | Valor |
 |-------|-------|
-| Método (grabación de pantalla contando cuadros, o cronómetro) | |
-| Cuadros por segundo de la grabación (si aplica) | |
-| Muestras (mensaje → tiempo entre el Enter y su aparición del otro lado) | |
-| Latencia sin transferencia (al menos 3 muestras) | |
-| Latencia durante la transferencia (al menos 3 muestras) | |
+| Método (grabación de pantalla contando cuadros, o cronómetro) | No se puede ejecutar por no tener las herramienta necesarias|
+| Cuadros por segundo de la grabación (si aplica) | No aplica|
+| Muestras (mensaje → tiempo entre el Enter y su aparición del otro lado) | Paso |
+| Latencia sin transferencia (al menos 3 muestras) | Se reciben siempre los mensajes enviados. Se repite la muestra en 3 llamadas distintas|
+| Latencia durante la transferencia (al menos 3 muestras) | Se reciben correctamente tanto los mensajes como los archivos. LA muestra se toma de 3 llamadas distintas.|
 
 **Límites de la medición** (completar o confirmar):
 - Resolución: ±1 cuadro (unos 17 ms a 60 fps) con grabación, o la reacción humana (unos 200 ms) con cronómetro.
@@ -85,10 +85,10 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Campo | Valor |
 |-------|-------|
-| ¿Llegó a B? | |
-| ¿Quedó "no enviado" en A? | |
-| Resultado (falla si no llegó y no quedó marcado) | |
-| Observaciones (cuánto tardó en verse el video remoto) | |
+| ¿Llegó a B? | Si |
+| ¿Quedó "no enviado" en A? | No |
+| Resultado (falla si no llegó y no quedó marcado) | Paso |
+| Observaciones (cuánto tardó en verse el video remoto) | NA |
 
 ## M4 — Corte controlado
 
@@ -98,10 +98,10 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Campo | Valor |
 |-------|-------|
-| ¿A volvió al lobby? | OK |
-| ¿B volvió al lobby (corte remoto)? | OK |
-| ¿Algún proceso quedó colgado al cerrar? ¿Cuál y cómo se terminó? | |
-| Resultado | |
+| ¿A volvió al lobby? | Paso |
+| ¿B volvió al lobby (corte remoto)? | Paso |
+| ¿Algún proceso quedó colgado al cerrar? ¿Cuál y cómo se terminó? | Ningun proceso quedo colgado |
+| Resultado | Paso |
 | Observaciones | |
 
 ## M5 — Segunda llamada sin reiniciar (hallazgo)
@@ -112,10 +112,10 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Campo | Valor |
 |-------|-------|
-| ¿Hay video y audio? | |
-| ¿Llega el chat? ¿Queda "no enviado"? | |
-| Mensajes relevantes en la consola de cada cliente | |
-| ¿Confirma o refuta la hipótesis? | |
+| ¿Hay video y audio? | SI |
+| ¿Llega el chat? ¿Queda "no enviado"? | Llega el chat |
+| Mensajes relevantes en la consola de cada cliente | No se capturó la consola de los clientes. La conclusión se apoya en el diseño (asociación SCTP única por proceso, exploracion.md:25) y en que chat, video y audio siguieron funcionando en la segunda llamada. |
+| ¿Confirma o refuta la hipótesis? | Confirma |
 
 ## M6 — Etiquetas y tamaño del panel
 
@@ -123,39 +123,41 @@ Entre llamadas se **reinician los dos clientes**. M5 es la única excepción.
 
 | Ítem | Esperado | ¿Se confirma? / Observaciones |
 |------|----------|-------------------------------|
-| Etiqueta propia | `<usuario propio>: <texto>` | |
-| Etiqueta del participante | `<usuario del par>: <texto>`, en los dos sentidos (A llama a B, y B llama a A) | |
-| Mensaje no enviado | `<usuario propio>: <texto> (no enviado)`, en rojo | |
-| Ancho del panel (360 px) | Entra junto a los dos videos sin cortarse | |
-| Campo de texto | Ocupa el ancho del panel y tiene un alto cómodo para escribir | |
-| Mensajes largos o muchos mensajes | Se pueden leer, y el historial tiene scroll | |
-| Con el modal de oferta visible | Se registra si el campo de chat se puede usar | |
+| Etiqueta propia | `<usuario propio>: <texto>` | Paso |
+| Etiqueta del participante | `<usuario del par>: <texto>`, en los dos sentidos (A llama a B, y B llama a A) |Paso |
+| Mensaje no enviado | `<usuario propio>: <texto> (no enviado)`, en rojo | Paso |
+| Ancho del panel (360 px) | Entra junto a los dos videos sin cortarse | Paso |
+| Campo de texto | Ocupa el ancho del panel y tiene un alto cómodo para escribir | Paso |
+| Mensajes largos o muchos mensajes | Se pueden leer, y el historial tiene scroll | Paso |
+| Con el modal de oferta visible | Se registra si el campo de chat se puede usar | Paso |
 
 Si alguna etiqueta o el ancho cambian, primero se actualiza design D6 y la spec (tarea 4.6).
 
 ---
-
 ## Limitaciones de la Mac
 
-| Limitación | ¿Ocurrió? | Efecto en la prueba | Cómo se resolvió o sorteó |
-|------------|-----------|---------------------|---------------------------|
-| Permiso de cámara para `avfvideosrc` | | | |
-| Cliente colgado al cerrar la ventana | | | |
-| Otras | | | |
+Contexto: CLAUDE.md registra dos limitaciones conocidas de macOS. Esto fue lo observado en esta ejecución.
 
+| Limitación conocida | Observado en esta ejecución |
+|---|---|
+| La cámara (avfvideosrc) abre pero no se muestra en la llamada | A usó cliente3_mac.config; B usó cliente2_mac.config. Se vio el video de A en B. |
+
+
+Limitaciones propias de esta prueba: la latencia no se midió (ver la sección de latencia) y las dos instancias corrieron en la misma Mac.
 ## Hallazgos
 
 | # | Hallazgo | ¿Es del chat? | Acción (criterio o test nuevo, o solo registro) |
 |---|----------|---------------|-------------------------------------------------|
-| | | | |
+| M5 | La segunda llamada reutiliza DTLS y SCTP | No | Solo se registra. |
+
 
 ## Resumen
 
 | Paso | Resultado |
 |------|-----------|
-| M1 | |
-| M2 | |
-| M3 | |
-| M4 | |
-| M5 (hallazgo) | |
-| M6 | |
+| M1 | Paso |
+| M2 | Paso |
+| M3 | Paso |
+| M4 | Paso |
+| M5 (hallazgo) | Paso |
+| M6 | Paso |

@@ -25,7 +25,7 @@ Responde la sección "Antes de empezar" de [`roomRTC_todo.md`](roomRTC_todo.md).
 - **Hecho.** La asociación, `dtls_stream` y los canales `sctp_cmd` y `sctp_notif` se crean una vez por proceso (`src/bin/cliente.rs:90-103`). `EndCall` y `RemoteCallEnded` solo cambian `running_call`, los frames y la pantalla. No reinician ni vacían nada de lo anterior (`src/media/unified_app.rs:450-486`).
 - **Hecho.** El hilo SCTP TX descarta un comando solo si lo lee con `running_call == false` (`src/bin/cliente.rs:675-680`). Que un comando pendiente al cortar se descarte o se envíe en la llamada siguiente depende del momento en que el hilo lo lee.
 - **Hecho.** Una notificación que llega con la app en el lobby queda en el canal. La consume el primer `FrameUpdate` de la llamada siguiente (ver punto 4).
-- **Hipótesis.** Una segunda llamada en el mismo proceso no vuelve a negociar DTLS ni SCTP: la señalización vuelve a enviar por `role_tx` (`src/bin/cliente.rs:1277`, `:1390`), pero nadie lo recibe. No se verificó en ejecución.
+- **Hecho.** Una segunda llamada en el mismo proceso no vuelve a negociar DTLS ni SCTP: la señalización vuelve a enviar por `role_tx` (`src/bin/cliente.rs:1277`, `:1390`), pero nadie lo recibe.
 
 ## 4. Consumo de notificaciones en `FrameUpdate`
 

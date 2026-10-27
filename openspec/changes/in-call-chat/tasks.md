@@ -51,7 +51,7 @@ Para que un test falle por la funcionalidad ausente y no por un error de compila
 
   Verificar: pasan `chat_4_1` y `chat_4_2`.
 - [x] 4.4 Gates automáticos del Hito 4: `cargo test chat_` (los 35 tests, de `chat_1_1` a `chat_4_2`), `cargo test`, `cargo fmt --all -- --check` y `cargo clippy --all-targets -- -D warnings`, sin regresiones. Verificar con grep que el código nuevo no tiene `unwrap`, `expect` ni `panic!` y que ningún test `chat_` usa red real, cámara ni `.config`. Mostrar la salida real.
-- [ ] 4.5 Ejecutar la prueba manual M1 a M6 con dos procesos reales (design D8), completando `docs/chat/evidencia/prueba_manual.md`:
+- [x] 4.5 Ejecutar la prueba manual M1 a M6 con dos procesos reales (design D8), completando `docs/chat/evidencia/prueba_manual.md`:
   - el resultado de cada paso;
   - el `shasum -a 256` del original y del recibido en M2;
   - la medición de latencia, con método y límites;
@@ -59,7 +59,7 @@ Para que un test falle por la funcionalidad ausente y no por un error de compila
   - el hallazgo de M5.
 
   Verificar: ningún paso de la plantilla queda sin resultado ("pasó", "falló" o "no se pudo ejecutar", con el motivo).
-- [ ] 4.6 Verificación final del Hito 4:
+- [x] 4.6 Verificación final del Hito 4:
   - Registrar el hallazgo de M5 en `docs/chat/exploracion.md` (punto 3) como hecho o hipótesis refutada.
   - Si M6 cambia las etiquetas o el ancho del panel, actualizar primero design D6 y la spec, y después el código y los tests.
   - Si algún paso de M1 a M4 falla por el chat, abrir la corrección con su criterio y su test antes de seguir.

@@ -5,7 +5,7 @@ context: |
   Feature: chat de texto entre los dos participantes de una videollamada, solo
   durante la llamada activa. La fuente de verdad del alcance y de las pruebas
   de aceptación está en docs/chat/roomRTC_todo.md y docs/chat/test_aceptacion.md.
-  Este change cubre los Hitos 1 a 3; el Hito 4 se especifica al cerrar el Hito 3.
+  Este change cubre los Hitos 1 a 4. El Hito 4 se especificó al cerrar el Hito 3 y se implementó en el mismo change.
   El Hito 0 (exploración) se documenta en docs/chat/exploracion.md.
   Restricciones: no cambiar src/bin/server.rs ni el enum Message de señalización;
   el servidor no participa del chat. El chat no debe afectar la transferencia de

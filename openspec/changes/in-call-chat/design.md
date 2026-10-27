@@ -169,6 +169,7 @@ Hechos sobre `running_call` que justifican el criterio:
 - **Lado RX:** después de `SctpPair::drive()`, toma lo recibido por cada extremo y lo clasifica con `route_incoming`, con la generación de la app receptora. Las notificaciones de `Chat` y la `FileOffer` de un `FileControl::Offer` se entregan al emisor de notificaciones de esa app, como el hilo RX (`cliente.rs:438`, `:476`).
 - **Uso desde los tests:** los tests envían los `FrameUpdate` a mano, igual que en el Hito 3.
 - **Hecho.** La oferta de archivo ya llega a la app por `IncomingFileOffer`, que guarda `pending_file_offer` (`unified_app.rs:665`). Aceptarla emite `SctpCommand::AcceptFile` y limpia la oferta (`:683-698`), así que 4.2 la verifica sin tocar el flujo de archivos.
+- En los tests e2e, la oferta de archivo la escribe en el stream 0 el puente (`ChatBridge::offer_file`); un `SendFile` de la app solo queda registrado, porque el test no lee un archivo real.
 
 **Ejecución de los `Task` en los tests del Hito 4 (hallazgo de la tarea 4.2).**
 - **Hecho.** `FrameUpdate` no procesa la `FileOffer` en el mismo tick: devuelve `Task::done(AppMessage::IncomingFileOffer { .. })` (`unified_app.rs:486-487`), y el runtime de iced es el que después pasa ese mensaje a `update`. Los tests llaman a `update` y no ejecutan el `Task`, así que sin algo más `pending_file_offer` nunca se guarda y 4.2 no se puede observar.

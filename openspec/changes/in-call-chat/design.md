@@ -168,7 +168,16 @@ Hechos sobre `running_call` que justifican el criterio:
 - **Mensajes de control:** se escriben en el stream 0, como `OFFER <nombre> <tamaño>`, igual que el hilo TX.
 - **Lado RX:** después de `SctpPair::drive()`, toma lo recibido por cada extremo y lo clasifica con `route_incoming`, con la generación de la app receptora. Las notificaciones de `Chat` y la `FileOffer` de un `FileControl::Offer` se entregan al emisor de notificaciones de esa app, como el hilo RX (`cliente.rs:438`, `:476`).
 - **Uso desde los tests:** los tests envían los `FrameUpdate` a mano, igual que en el Hito 3.
-- **Hecho.** La oferta de archivo ya llega a la app por `IncomingFileOffer`, que guarda `pending_file_offer` (`unified_app.rs:652`). Aceptarla emite `SctpCommand::AcceptFile` y limpia la oferta (`:670-684`), así que 4.2 la verifica sin tocar el flujo de archivos.
+- **Hecho.** La oferta de archivo ya llega a la app por `IncomingFileOffer`, que guarda `pending_file_offer` (`unified_app.rs:665`). Aceptarla emite `SctpCommand::AcceptFile` y limpia la oferta (`:683-698`), así que 4.2 la verifica sin tocar el flujo de archivos.
+
+**Ejecución de los `Task` en los tests del Hito 4 (hallazgo de la tarea 4.2).**
+- **Hecho.** `FrameUpdate` no procesa la `FileOffer` en el mismo tick: devuelve `Task::done(AppMessage::IncomingFileOffer { .. })` (`unified_app.rs:486-487`), y el runtime de iced es el que después pasa ese mensaje a `update`. Los tests llaman a `update` y no ejecutan el `Task`, así que sin algo más `pending_file_offer` nunca se guarda y 4.2 no se puede observar.
+- **Hecho.** iced 0.13 no tiene una API pública para leer el contenido de un `Task`: `iced::task` solo exporta `Handle` y `Task`. La función que da el stream de acciones es `iced_runtime::task::into_stream` (`iced_runtime-0.13.2/src/task.rs:365`), y `iced_runtime` no era una dependencia directa.
+- **Decisión.** `iced_runtime = "0.13"` se agrega como `dev-dependency`, que resuelve a la misma versión que usa `iced`, así que el tipo `Task` es el mismo. Un helper de los tests e2e, `run_task`, hace lo que el runtime: toma el stream del `Task`, lee las acciones listas con `now_or_never` y pasa cada `Action::Output(msg)` a `update`, ejecutando también el `Task` que devuelve. Las acciones que no son `Output` se ignoran. El tick de los tests e2e es `update(FrameUpdate)` más `run_task`.
+- **Por qué `now_or_never` y no `block_on`.** Un `Task` que espera al runtime real (operaciones de ventana) no termina nunca en un test. Con `now_or_never` el helper solo toma lo que ya está listo, como `Task::done`, y no se cuelga.
+- **No cambia el código de producción** ni el flujo de archivos.
+- *Descartada:* procesar la `FileOffer` en el mismo tick, como el chat. **Motivo:** cambia el flujo de archivos, que la spec pide no tocar.
+- *Descartada:* poner la oferta pendiente enviando `IncomingFileOffer` a mano. **Motivo:** no probaría que el tick entrega la oferta que llevó el puente.
 
 **Ubicación.**
 - **Archivo:** `src/media/unified_app_e2e_tests.rs`, declarado en `unified_app.rs` como módulo hijo `#[cfg(test)]` con `#[path]`. Así ve los campos privados de `UnifiedApp` (`screen`, `chat`), igual que `mod tests`.

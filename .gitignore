@@ -20,7 +20,8 @@ Cargo.lock
 users.txt
 
 #ignore certs dir
-certs/logger.log
+certs/
 
+.DS_Store
+logger.log
 received_*
-

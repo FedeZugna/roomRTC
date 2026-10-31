@@ -21,3 +21,6 @@ users.txt
 
 #ignore certs dir
 certs/logger.log
+
+received_*
+

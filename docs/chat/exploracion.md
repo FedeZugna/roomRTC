@@ -71,7 +71,7 @@ Responde la sección "Antes de empezar" de [`roomRTC_todo.md`](roomRTC_todo.md).
 
 ### 5.6 Nueva llamada en el mismo proceso: fuera de alcance
 
-- **Decisión.** No se corrige la renegociación de DTLS y SCTP entre llamadas (ver la hipótesis del punto 3). Es una limitación previa al chat. La limpieza del chat entre llamadas se prueba a nivel de modelo y de app (Hitos 1 a 3). En la prueba manual del Hito 4 se reinician ambos clientes entre llamadas, y la limitación queda registrada.
+- **Decisión.** No se corrige la renegociación de DTLS y SCTP entre llamadas. Es una limitación previa al chat. La limpieza del chat entre llamadas se prueba a nivel de modelo y de app (Hitos 1 a 3). En la prueba manual del Hito 4 se reinician ambos clientes entre llamadas, y la limitación queda registrada.
 - **Descartada:** hacer que la configuración DTLS/SCTP corra una vez por llamada. **Motivo:** es un refactor del transporte más grande que el chat. Merece un change propio.
 
 ## 6. Puntos de integración para la implementación

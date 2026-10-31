@@ -10,7 +10,7 @@ Motivación y alcance: ver `proposal.md`. Requisitos: ver `specs/call-chat/spec.
 - **Hecho.** `FrameUpdate` consume una notificación por tick y solo corre en `VideoCall` (`src/media/unified_app.rs:453`, `:1153`).
 - **Hecho.** `AppScreen::VideoCall { .. }` se construye en 4 lugares (`unified_app.rs:369`, `:406`, `:477` y `force_video` en `:1270`).
 - **Hecho.** `make_app_with_channels` descarta el emisor de notificaciones (`unified_app.rs:1228`).
-- **Hipótesis (fuera de alcance).** Una segunda llamada en el mismo proceso no vuelve a negociar DTLS ni SCTP (`exploracion.md`, punto 3).
+- **Hecho (confirmado en M5).** Una segunda llamada en el mismo proceso no vuelve a negociar DTLS ni SCTP (`exploracion.md`, punto 3).
 
 ## Goals / Non-Goals
 
@@ -115,7 +115,7 @@ Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón 
 - *Descartada:* `Task::done(AppMessage::ChatReceived { .. })`, como las notificaciones de archivos. **Motivo:** los tests llaman a `update` y no ejecutan el `Task` que devuelve, así que 3.5 ("una notificación por tick") no se podría observar después de cada tick.
 
 **Panel de chat.**
-- **Hecho.** `view_chat` (`unified_app.rs:1217`) se ubica en la misma fila que los dos videos. El modal de oferta de archivos sigue superpuesto sobre todo el contenido, como antes.
+- **Hecho.** `view_chat` (`unified_app.rs, función view_chat`) se ubica en la misma fila que los dos videos. El modal de oferta de archivos sigue superpuesto sobre todo el contenido, como antes.
 - **Hecho.** Cada línea es un widget `text`, que muestra el texto literal sin interpretar marcado. La arma `chat_line`, que recibe los dos nombres. El método `UnifiedApp::chat_line` se los pasa (3.12, cambio pedido tras la prueba manual):
   - Mensaje propio: `<current_username>: <texto>`. Si no hay usuario logueado, como en algunos tests, se usa `Yo`.
   - Mensaje propio no enviado: `<current_username>: <texto> (no enviado)`, en rojo.
@@ -142,7 +142,7 @@ Mensajes nuevos de `AppMessage`: `ChatDraftChanged(String)`, `ChatSend` (botón 
 - **Supuesto.** Las etiquetas, la ubicación y el tamaño del panel se confirman en la prueba manual del Hito 4 (ver Open Questions).
 
 **Fallo al entregar el comando al transporte (3.11).**
-- **Hecho.** Si `sctp_tx.send(SendChat { .. })` falla porque el hilo SCTP TX ya no recibe comandos, `ChatSend` marca el mensaje como "no enviado" con `mark_failed(id)` (`unified_app.rs:575-578`). El mensaje ya se agregó al historial, así que no se pierde en silencio. Es el mismo requisito de reporte de fallo de envío de la spec, con su propio escenario (`chat_3_11`).
+- **Hecho.** Si `sctp_tx.send(SendChat { .. })` falla porque el hilo SCTP TX ya no recibe comandos, `ChatSend` marca el mensaje como "no enviado" con `mark_failed(id)` (`rama AppMessage::ChatSend de unified_app.rs`). El mensaje ya se agregó al historial, así que no se pierde en silencio. Es el mismo requisito de reporte de fallo de envío de la spec, con su propio escenario (`chat_3_11`).
 
 **De dónde salen las condiciones de `prepare_send` (D4).** Cuando llega `ChatSend`, la app las calcula así:
 - **Llamada activa:** la pantalla actual es `AppScreen::VideoCall`. No se usa `running_call`.
@@ -198,7 +198,7 @@ Hechos sobre `running_call` que justifican el criterio:
 **Hechos que condicionan los pasos.**
 - **Hecho.** El archivo recibido se guarda como `received_<nombre>` en el directorio de trabajo del proceso que lo recibe (`cliente.rs:415`). La comparación de M2 se hace con `shasum -a 256` del original y de ese archivo.
 - **Hecho.** El tamaño máximo de mensaje SCTP es 4 MB (`SCTP_MAX_FILE_SIZE`, `src/client/types.rs:46`), así que el archivo de M2 tiene que pesar menos.
-- **Hipótesis.** La segunda llamada sin reiniciar (M5) no vuelve a negociar DTLS ni SCTP (`exploracion.md`, punto 3). Su resultado confirma o refuta esa hipótesis, y no cuenta como fallo del chat (proposal, Fuera de alcance).
+- **Hecho (confirmado en M5).** La segunda llamada sin reiniciar (M5) no vuelve a negociar DTLS ni SCTP (`exploracion.md`, punto 3). Su resultado confirmo la hipótesis.
 
 **Medición de latencia (M2).** Los logs actuales (`println!`) no llevan marca de tiempo, así que se mide desde afuera:
 - **Método:** grabación de pantalla, contando cuadros entre el Enter y la aparición del mensaje. Si no se puede, cronómetro.
